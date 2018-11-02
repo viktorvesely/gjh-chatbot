@@ -1,0 +1,22 @@
+{
+  "name": "messenger-quick-start",
+  "version": "1.0.0",
+  "description": "gjh_bot webhook",
+  "main": "app.js",
+  "scripts": {
+    "start": "node --harmony app.js"
+  },
+  "author": "Viktor",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "express": "^4.16.3",
+    "nedb": "^1.8.0",
+    "node-wit": "^4.3.0",
+    "request": "^2.88.0",
+    "sqlite": "^3.0.0"
+  },
+  "engines": {
+    "node": "8"
+  }
+}

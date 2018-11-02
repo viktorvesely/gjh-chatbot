@@ -1,0 +1,5 @@
+create table notifications (ID INTEGER PRIMARY KEY AUTOINCREMENT ,sender_psid STRING,day INTEGER, month INTEGER, year INTEGER, subject STRING, timestamp INTEGER);
+
+create table users (ID INTEGER PRIMARY KEY AUTOINCREMENT ,sender_psid STRING, first_name STRING, second_name STRING);
+
+create table subs (ID INTEGER PRIMARY KEY AUTOINCREMENT ,sender_psid STRING);
