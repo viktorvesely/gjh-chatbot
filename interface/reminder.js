@@ -9,17 +9,15 @@ module.exports = class ReminderInterface {
   print(reminders) {
     let message = "Čaká ťa,\n";
 
-    let exist = false;
+    if (reminders.length < 1) {
+      return "Máš voľno. Wuuuu.";
+    }
     reminders.forEach((row) => {
-      exist = true;
       message += row["subject"].substring(0, row["subject"].length -1) + "a";
       message += " " + (row["day"] + 1 ) + "." + (row["month"] + 1) + "." + row["year"] + ",\n";
     });
     message += "To bude ale srandy."
-    if (exist === false) {
-      message = "Máš voľno. Wuuuu.";
-    }
-    return message
+    return message;
   }
   
   makeConfirmationQuestion(reminder) {

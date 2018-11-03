@@ -64,12 +64,13 @@ module.exports = {
   },
 
   getGifURL: (keyword) => {
+    var keywordEncoded = encodeURIComponent(keyword);
     return new Promise((resolve, reject) => {
       // Generate request URL object
       let offset = module.exports.getRandInt(1, 5) // Used to add randomness when requesting the same keyword repeatedly
       var options = {
           host: 'api.giphy.com',
-          path: '/v1/gifs/search?q=' + keyword + 
+          path: '/v1/gifs/search?q=' + keywordEncoded + 
                 '&api_key=' + GIF_API + 
                 '&limit=1&offset=' + offset // Limit - number of gifs requested
       }
@@ -101,5 +102,23 @@ module.exports = {
     let now = new Date();
     let hours = now.getHours();
     return hours >= hours_compare;
+  },
+  
+  userNameParser(entities, originalText) {
+    if(entities.hasOwnProperty("user_name") == false) {
+      return "";
+    }
+    let name = "";
+    let strippedOriginalText = originalText.replace(".", "");
+    let words = strippedOriginalText.split(" ");
+    let numberOfNames = entities.user_name[0].value.split(" ").length;
+    if (numberOfNames != 2) {
+      for (let i = 0; i < numberOfNames; ++i) {
+        name +=words[words.length - (numberOfNames - i)] +  ((i + 1) == numberOfNames ?  "" : " ");
+      }
+      return name;
+    }
+    name = words[words.length - 2] + " " + words[words.length - 1];
+    return name;
   }
 }

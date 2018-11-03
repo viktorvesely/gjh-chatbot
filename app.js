@@ -21,6 +21,7 @@ const Responses = require('./responses/responses.js');
 const Cache = require('./helpers/cache.js');
 const MessageHandler = require('./handlers/text.js');
 const SerieExecutor = require('./helpers/serieExecutor');
+const PostBackHandler = require('./handlers/postBacks.js');
 //const ReminderInterface = require()
 
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
@@ -112,91 +113,12 @@ function messageAccepted (response, sender_psid) {
       break;
     }
   }
-  
   var serieExecutor = new SerieExecutor(todos, () => { serieExecutor = undefined });
 }
 
 function messageRejected (response, sender_psid) {
   console.error(response.error);
-  actions.callSendAPI(sender_psid, "Ou toto je nepríjemné, niečo sa pokailo.");
-}
-
-function setReminder(data, sender_psid) {
-  let reminder = {};
-  let question = "";
-  let subject = "";
-  let date = new Date();
-  reminder["target"] = sender_psid;
-  reminder["year"] = date.getFullYear();
-  
-  Object.keys(data["entities"]).forEach((key) => {
-      let value = data["entities"][key];
-      if (key == "time_tomorrow" && value[0].confidence > 0.70) {
-        reminder["month"] = date.getMonth();
-        reminder["day"] = date.getDate() - 1;
-      }
-      else if (key == "time_day" && value[0].confidence > 0.70 ) {
-          let dayId = -1;
-          for (let i = 0; i < daysInWeek.length; ++i) {
-            if (daysInWeek[i].substring(0,3) == value[0].value.substring(0,3)) {
-              dayId = i;
-              break;
-            }
-          }
-          if (dayId == -1) {
-            let responseError = {text: "Nerozumiem, ktorý deň myslíš."};
-            actions.callSendAPI(sender_psid, responseError);
-            return;
-          }
-          let diff = dayId - date.getDay();
-          if (diff < 0) {
-            diff = 7 - Math.abs(diff)
-          }
-          diff -= 1;
-          reminder["day"] = date.getDate() + diff;
-          reminder["month"] = date.getMonth();
-          
-      } else if (key == "time_date") {
-        
-        let date = value[0].value;
-        reminder["day"] = Number(date.substring(0, date.indexOf("d"))) - 2;
-        let distance = 0;
-        if (reminder["day"] < 0) {
-          reminder["day"] = 29;
-          distance = -1;
-        }
-        reminder["month"] = Number(date.substring(date.indexOf("d") + 1, date.indexOf("m"))) - 1  + distance; 
-        
-      } else if (key == "lesson_name") {
-        
-        reminder["lesson"] = value[0].value;
-        
-      } 
-    });
-
-    if (Utils.hasObjectKeys(reminder, ["month","lesson","year","day","target"]) == false) {
-      actions.callSendAPI(sender_psid, "Nevedel som rozoznať nejaké údaje. Skús si, prosím, pozrieť chyby.");
-      return;
-    }
-
-    //let save = {target: sender_psid, day: }
-    let reminderTime = new Date();
-    reminderTime.setFullYear(reminder["year"], reminder["month"], reminder["day"] + 1);
-    reminderTime.setHours(17, 0, 0);
-    reminder["year"] = reminderTime.getFullYear();
-    reminder["month"] = reminderTime.getMonth();
-    reminder["day"] = reminderTime.getDate() - 1;
-
-    if (reminderTime < date) {
-      actions.callSendAPI(sender_psid, "To už je minulosť.");
-      return;
-    }
-    reminder["timestamp"] = reminderTime.getTime();
-    Reminders[sender_psid] = reminder;
-    question = "Mám ti pripomenúť " + reminder["lesson"].substring(0, reminder["lesson"].length -1) + "u" + " " 
-                + (reminder["day"] + 1) + "." + (reminder["month"]+1)  + "." + reminder["year"] + " ?";
-
-  actions.sendConfirmation(sender_psid, question,"button_save_reminder_yes", "button_save_reminder_no");
+  actions.callSendAPI(sender_psid, "Ou toto je nepríjemné, niečo sa pokazilo.");
 }
 
 
@@ -229,28 +151,10 @@ function addUser(sender_psid, data, originalText) {
     
 
 
-
-function showReminder(reminders) {
-  let message = "Čaká ťa,\n";
-  
-  let exist = false;
-  reminders.forEach((row) => {
-    exist = true;
-    message += row["subject"].substring(0, row["subject"].length -1) + "a";
-    message += " " + (row["day"] + 1 ) + "." + (row["month"] + 1) + "." + row["year"] + ",\n";
-  });
-  message += "To bude ale srandy."
-  if (exist === false) {
-    message = "Máš voľno. Wuuuu.";
-  }
-  return message
-}
-
-
 // Handles messages events
 function handleMessage(sender_psid, received_message) {
   let response;
-  let text = received_message.text;
+  var text = received_message.text;
 
   // Check if the message contains text
   if (text) {    
@@ -265,7 +169,7 @@ function handleMessage(sender_psid, received_message) {
       var wasAlreadySend = false;
 
       
-      let messageHandler = new MessageHandler(data, sender_psid, cache);
+      let messageHandler = new MessageHandler(data, sender_psid, cache, text);
       messageHandler.resolve().then(response => {
         messageAccepted(response, sender_psid)
       }, response => {
@@ -290,7 +194,7 @@ function handleMessage(sender_psid, received_message) {
             break;
           case "reminder_time":
               responseText = "Lol nie";
-              setReminder(data, sender_psid);
+              // setReminder(data, sender_psid);
             break;
           case "reminder_delete":
               actions.sendConfirmation(sender_psid, "Naozaj mám zmazať všetky pripomienky? Jednotlivé pripomienky zmažeš správou Nepíšeme [predmet].", "button_reminder_delete_yes", "button_reminder_delete_no");
@@ -298,7 +202,7 @@ function handleMessage(sender_psid, received_message) {
             break;
           case "reminder_show":
               remdb.findReminderByUser(sender_psid, (reminders) => {
-                actions.callSendAPI(sender_psid,  showReminder(reminders));
+                //actions.callSendAPI(sender_psid,  showReminder(reminders));
               });
               wasAlreadySend = true;
             break;
@@ -471,6 +375,14 @@ function handleMessage(sender_psid, received_message) {
 function handlePostback(sender_psid, received_postback) {
   
   let payload = received_postback.payload;
+  
+  let handler = new PostBackHandler(sender_psid, payload, cache);
+  handler.resolve().then(response => {
+      messageAccepted(response, sender_psid)
+  }, response => {
+    messageRejected(response, sender_psid);
+  })
+  return;
   
   switch(payload) {
     case "button_save_reminder_yes":

@@ -5,7 +5,7 @@ const fetch = require('node-fetch');
 module.exports = class Actions {
   constructor(PAGE_ACCESS_TOKEN) {
     this.__PAGE_ACCESS_TOKEN = PAGE_ACCESS_TOKEN;
-    this.__attachmentResponseOffsetTime = 1; // seconds
+    this.__attachmentResponseOffsetTime = 0; // seconds
   }
   
   messageRequest(sender_psid, structure, type="RESPONSE") {

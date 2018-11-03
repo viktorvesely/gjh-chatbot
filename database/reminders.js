@@ -68,7 +68,7 @@ module.exports = {
       }
     });
   
-    let save = [reminder["target"], reminder["day"], reminder["month"], reminder["year"], reminder["lesson"], reminder["timestamp"]];
+    let save = [reminder.target, reminder.day, reminder.month, reminder.year, reminder.what, reminder.timestamp];
 
     db.run('INSERT INTO notifications(sender_psid,day,month,year,subject,timestamp) VALUES(?,?,?,?,?,?)', save, function(err) {
       if (err) {
