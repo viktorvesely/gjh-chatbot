@@ -1,51 +1,40 @@
 
 'use strict';
 
-// Imports dependencies and set up http server
-
 const 
   request = require('request'),
   express = require('express'),
   body_parser = require('body-parser'),
   app = express().use(body_parser.json()); // creates express http server
-  
-const userdb = require('./database/user.js');
-const remdb = require('./database/reminders.js');
-const subsdb = require('./database/memes_subs.js');
-const basicResponses = require('./responses/basic_responses');
+
 const {Wit, log} = require('node-wit');
 const attachmentHandler = require('./handlers/attachment.js');
 const Actions = require('./helpers/actions.js');
-const Utils = require('./helpers/utils.js');
-const Responses = require('./responses/responses.js');
 const Cache = require('./helpers/cache.js');
 const MessageHandler = require('./handlers/text.js');
 const SerieExecutor = require('./helpers/serieExecutor');
 const PostBackHandler = require('./handlers/postBacks.js');
-//const ReminderInterface = require()
 
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 const WIT_ACCES_TOKEN = process.env.WIT_ACCES_TOKEN;
 const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
+
+const Version = "beta 1.4";
+const actions = new Actions(PAGE_ACCESS_TOKEN);
+const cache = new Cache();
 
 const client = new Wit({
   accessToken: WIT_ACCES_TOKEN,
   logger: new log.Logger(log.DEBUG) // optional
 });
 
-const wit_entities = ["obligation", "gjh_lunch", "gjh_teacher", "gjh_test", "lesson_name", "tell_name", "reminder_show", "subscribe_memes", "life_meaning", "reminder_delete", "show_abilities", "reminder_delete_spesific", "tell_joke", "compare_object", "cannot", "why_object", "favourite_obj"];
-const daysInWeek = ["pondelok", "utorok", "streda", "stvrtok", "piatok", "sobota", "nedela"]
-const Version = "beta 1.3";
-
-const confidenceTreshold = 0.70;
-const actions = new Actions(PAGE_ACCESS_TOKEN);
-const responses = new Responses();
-const cache = new Cache();
-
-var Reminders = {};
-var Users = {};
+app.use(express.static('public'));
 
 app.listen(process.env.PORT || 1337, () => console.log('webhook is listening'));
+
+app.get('/', (req, res) => {
+  res.sendFile(__dirname +  '/views/index.html');
+});
 
 app.post('/webhook', (req, res) => {  
   let body = req.body;
@@ -102,15 +91,15 @@ function messageAccepted (response, sender_psid) {
   for (let i = 0; i < msgs.length; ++i) {
     let msg = msgs[i];
     switch(msg.type) {
-    case "text":
-      todos.push(() => { return actions.callSendAPI(sender_psid, msg.value); });
-      break;
-    case "confirmation":
-      todos.push(() => { return actions.sendConfirmation(sender_psid, msg.value, msg.options[0], msg.options[1]); });
-      break;
-    case "image":
-      todos.push(() => { return actions.sendAttachment(sender_psid, msg.type, msg.value); });
-      break;
+      case "text":
+        todos.push(() => { return actions.callSendAPI(sender_psid, msg.value); });
+        break;
+      case "confirmation":
+        todos.push(() => { return actions.sendConfirmation(sender_psid, msg.value, msg.options[0], msg.options[1]); });
+        break;
+      case "image":
+        todos.push(() => { return actions.sendAttachment(sender_psid, msg.type, msg.value); });
+        break;
     }
   }
   var serieExecutor = new SerieExecutor(todos, () => { serieExecutor = undefined });
@@ -118,38 +107,8 @@ function messageAccepted (response, sender_psid) {
 
 function messageRejected (response, sender_psid) {
   console.error(response.error);
-  actions.callSendAPI(sender_psid, "Ou toto je nepríjemné, niečo sa pokazilo.");
+  actions.callSendAPI(sender_psid, "Ou, toto je nepríjemné. Niečo sa pokazilo. 😞");
 }
-
-
-function addUser(sender_psid, data, originalText) {
-  
-  let name  = "";
-  if(data["entities"].hasOwnProperty("user_name") == false) {
-    actions.callSendAPI(sender_psid, {text: "Gratulujem. Do tejto časti kódu by som sa nemal dostať. Nahlás, prosím, túto chybu. Ďakujem!"});
-    return;
-  }
-  originalText = originalText.replace(".", "");
-  let words = originalText.split(" ");
-  let numberOfNames = data["entities"]["user_name"][0].value.split(" ").length;
-  if (numberOfNames != 2) {
-    for (let i = 0; i < numberOfNames; ++i) {
-      name +=words[words.length - (numberOfNames - i)] + " ";
-    }
-    actions.callSendAPI(sender_psid, {text: "Super meno, " + name + ", ale poprosím ťa len o presné krstné meno a priezvisko." });
-    return;
-  }
-  
-  name = words[words.length - 2] + " " + words[words.length - 1];
-  let payload = {}
-  payload["sender_psid"] = sender_psid;
-  payload["first_name"] = words[words.length - 2];
-  payload["second_name"] = words[words.length - 1];
-  Users[sender_psid] = payload;
-  actions.sendConfirmation(sender_psid, "Naozaj je '" + name + "' tvoje meno? Prosím, nech je aj s diakritikou.", "button_right_name_yes", "button_right_name_no");
-}
-    
-
 
 // Handles messages events
 function handleMessage(sender_psid, received_message) {
@@ -164,197 +123,12 @@ function handleMessage(sender_psid, received_message) {
 
     client.message(strippedText.replace(".", ""), {})
     .then((data) => {
-
-      let responseText = "";
-      var wasAlreadySend = false;
-
-      
       let messageHandler = new MessageHandler(data, sender_psid, cache, text);
-      messageHandler.resolve().then(response => {
+      messageHandler.resolve(sender_psid).then(response => {
         messageAccepted(response, sender_psid)
       }, response => {
         messageRejected(response, sender_psid);
       })
-      
-      return;
-      
-      if(data["entities"]["intent"] && data["entities"]["intent"][0].confidence > confidenceTreshold) {
-        switch(data["entities"]["intent"][0].value) {
-          case "current_lesson":
-              responseText = "Teraz mas nemcinu 303";
-            break;
-          case "spesific_lesson":
-              responseText = "anglictina 505";
-            break;
-          case "teacher_cabinet":
-            responseText = "815";
-            break;
-          case "today_lunch":
-              responseText = "Jedlo";
-            break;
-          case "reminder_time":
-              responseText = "Lol nie";
-              // setReminder(data, sender_psid);
-            break;
-          case "reminder_delete":
-              actions.sendConfirmation(sender_psid, "Naozaj mám zmazať všetky pripomienky? Jednotlivé pripomienky zmažeš správou Nepíšeme [predmet].", "button_reminder_delete_yes", "button_reminder_delete_no");
-              wasAlreadySend = true;
-            break;
-          case "reminder_show":
-              remdb.findReminderByUser(sender_psid, (reminders) => {
-                //actions.callSendAPI(sender_psid,  showReminder(reminders));
-              });
-              wasAlreadySend = true;
-            break;
-          case "reminder_delete_spesific":
-            remdb.deleteReminderBySubject(sender_psid, data["entities"]["lesson_name"][0].value, (changes) => {
-              if (changes == 0) 
-                actions.callSendAPI(sender_psid, "Uhmmm, takú písomku nemáš.");
-              else 
-                actions.callSendAPI(sender_psid, "O starosť menej.");
-            });
-            wasAlreadySend = true;
-            break;
-          case "welcome_message":
-            responses.welcomeMessage(sender_psid, msg => {
-              actions.callSendAPI(sender_psid, msg);
-            });
-            wasAlreadySend = true;
-            break;
-          case "save_user":
-            addUser(sender_psid, data, text);
-            wasAlreadySend = true;
-            break;
-          case "samko_mode":
-            actions.callSendAPI(sender_psid, "nie!");
-            wasAlreadySend = true;
-            break;
-          case "subscribe_memes":
-            subsdb.checkIfExist(sender_psid, (exist) =>{
-              if (exist == false) {
-                subsdb.addSub(sender_psid);
-                actions.callSendAPI(sender_psid, "Letz meme it up.");
-              }
-              else {
-                actions.callSendAPI(sender_psid, "Neboj, už odoberáš freš memes.");
-              }
-            });
-            wasAlreadySend = true;
-            break;
-          case "show_mood":
-            responseText = basicResponses.mood();
-            break;
-          case "life_meaning":
-            responseText = basicResponses.lifeMeaning();
-            break;
-          case "current_time":
-            responseText = basicResponses.currentTime();
-            break;
-          case "tell_name":
-            wasAlreadySend = true;
-            userdb.checkIfExist(sender_psid, (exist) => {
-              if (exist) {
-                actions.callSendAPI(sender_psid, "Jednoznačne, " + exist[0]["first_name"] + ", prečo sa pýtaš?")
-              }
-              else{
-                actions.callSendAPI(sender_psid, "Ahoj, " + sender_psid + "#. Zaťiaľ ťa poznám iba takto. Ale pokojne sa mi predstav.")
-              }
-            });
-            break;
-          case 'tell_joke':
-            responseText = basicResponses.joke();
-            Utils.getGifURL('laugh').then((gif_url) => actions.sendAttachment(sender_psid, 'image', gif_url))
-            break;
-          case 'tell_opinion':
-            if(data['entities'].hasOwnProperty('opinion_object')) {
-              let value = data['entities']['opinion_object'][0].value;
-              let opinion_obj = basicResponses.getOpinionOn(value);
-              responseText = opinion_obj.text;
-              if (opinion_obj.hasOwnProperty('gif_keyword')) {
-                Utils.getGifURL(opinion_obj.gif_keyword)
-                  .then((gif_url) => actions.sendAttachment(sender_psid, 'image', gif_url))
-              } else if (opinion_obj.hasOwnProperty('gif_url')) {
-                actions.sendAttachment(sender_psid, 'image', opinion_obj.gif_url);
-              }
-            } else {
-              responseText = 'Nevedel som vyhodnotiť, na čo si sa pýtal 😕. Čoskoro sa to ale naučím!';
-            }
-            break;
-          case 'say_something':
-            responseText = basicResponses.saySomething();
-            break;
-          case 'tell_why':
-            if (! data['entities'].hasOwnProperty('why_object')) {
-              responseText = 'Nevedel som vyhodnotiť, na čo si sa pýtal 😕. Čoskoro sa to ale naučím!';
-            } else {
-              responseText = basicResponses.tellWhy(data['entities']);
-            }
-            break;
-          case 'compare':
-            let cannot_compare = 'Aši mi ušlo nejaké slovíčko, neviem ti povedať 😕'
-            if (!data['entities'].hasOwnProperty('compare_object')) {
-              responseText = cannot_compare;
-            } else {
-              let compare_object_arr = data['entities']['compare_object'];
-              if (compare_object_arr.length != 2) { // if not enough objects to compare
-                responseText = cannot_compare;
-              } else { // 
-                responseText = basicResponses.compare(compare_object_arr[0].value, compare_object_arr[1].value);
-              }
-            }
-            break;
-          case 'say_bye':
-            responseText = basicResponses.sayBye();
-            break;
-          case 'thanks':
-            responseText = basicResponses.respondToThanks();
-            break;
-          case 'swear':
-            responseText = basicResponses.handleSwearing();
-            break;
-          case 'tell_activity':
-            responseText = basicResponses.tellActivity();
-            break;
-          case 'tell_favourite':
-            if (! data['entities'].hasOwnProperty('favourite_obj')) {
-              responseText = 'Nad tým som sa nikdy nezamýšľal 🤔';
-            } else {
-              responseText = basicResponses.tellFavourite(data['entities']['favourite_obj']);
-            }
-            break;
-        }
-      } else if (Object.keys(data.entities).length > 0) {
-        if (data.entities.hasOwnProperty("greeting") && data.entities["greeting"][0].confidence > 0.7) {
-          responses.welcomeMessage(sender_psid, msg => {
-            actions.callSendAPI(sender_psid, msg);
-          });
-          return;
-        }
-        let max = -1;
-        let id = -1;
-        for (var i = 0; i < wit_entities.length; ++i){
-          if (data["entities"].hasOwnProperty(wit_entities[i])){
-            if(data["entities"][wit_entities[i]].confidence > max) {
-              id = i;
-              max = data["entities"][wit_entities[i]].confidence;
-            }
-          }
-        }
-
-        if (id != -1) {
-          responseText = "Uhm, nerozumiem, čo si tým myslel. Rozumiem, ale slovíčku " + data["entities"][wit_entities[id]]["value"]  + ", skús ho použiť v inom kontexte."; 
-        } else {
-          responseText = "Zachytil som nejaké slovíčka, ale žiadne, ktorého by som sa mohol chytiť.";
-        }
-
-      } else {
-        responseText = basicResponses.doesNotUnderstandMessage();
-      }
-
-      if (! wasAlreadySend) {
-        actions.callSendAPI(sender_psid, responseText);
-      }
-
     }).catch(console.error);
 
   } else if (received_message.attachments) {
@@ -384,7 +158,7 @@ function handlePostback(sender_psid, received_postback) {
   })
   return;
   
-  switch(payload) {
+ /* switch(payload) {
     case "button_save_reminder_yes":
       actions.callSendAPI(sender_psid, "Idem na to!");
       remdb.insertNewReminder(Reminders[sender_psid]);
@@ -423,5 +197,5 @@ function handlePostback(sender_psid, received_postback) {
       break;
     case "button_show_powers":
       break;
-      }
+      }*/
 }

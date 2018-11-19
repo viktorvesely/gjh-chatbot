@@ -31,24 +31,11 @@ module.exports = class ReminderInterface {
     var now = new Date();
     switch(name) {
       case "time_day":
-        let day = "";
-        let dayId = -1;
-        for (let i = 0; i < this.days.length; ++i) {
-          if (this.days[i].substring(0,3) == entity[0].value.substring(0,3)) {
-            day = this.days[i];
-            dayId = i;
-            break;
-          }
-        }
-        if (!day) {
+        let diff = Utils.dayOffset(entity[0].value, this.days);
+        if (diff === -1) {
           reminder.error = "Nerozumiem, ktorý deň myslíš."
           return;
         }
-        let diff = dayId - now.getDay();
-        if (diff < 0) {
-          diff = 7 - Math.abs(diff)
-        }
-        diff -= 1;
         reminder.day = now.getDate() + diff;
         reminder.month = now.getMonth();
         break;

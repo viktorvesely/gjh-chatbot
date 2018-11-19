@@ -12,7 +12,7 @@ module.exports = {
     return true;
   },
   isConfident: (value) => {
-    if (!value[0] || !value[0].confidence) {
+    if (!value || !value[0] || !value[0].confidence) {
       return false;
     }
     return value[0].confidence > 0.7;
@@ -120,5 +120,59 @@ module.exports = {
     }
     name = words[words.length - 2] + " " + words[words.length - 1];
     return name;
+  },
+  
+  fromUtcTimeToHours(timestamp) {
+    let date = new Date(timestamp);
+    date.setHours(date.getHours() + (date.getTimezoneOffset() / 60));
+    let start = date.toTimeString().split(":");
+    return start;
+  },
+  
+  dayOffset(target, days, onlyIndex=false) {
+    var targetId = -1;
+    var currentId = new Date().getDay() - 1;
+    for (let i = 0; i < days.length; ++i) {
+      let day = days[i]
+      if (target.substr(0, 3).toLowerCase() === day.substr(0, 3)) {
+        targetId = i;
+        if(onlyIndex) {
+          return targetId;
+        }
+        break;
+      }
+    }
+    if (targetId === -1) { return -1; }
+    if (targetId > currentId) {
+      return targetId - currentId;
+    }
+    else {
+      return 7 - (currentId - targetId);
+    }
+  },
+  
+  parseDayIndexFromDaySpecificationEntity(timeSpecificationEntity) {
+    let dayIndex = -1;
+    if (this.isConfident(timeSpecificationEntity)) {
+      let value = timeSpecificationEntity[0].value.toLowerCase();
+      switch (value) {
+        case "today":
+          dayIndex = new Date().getDay() -1;
+          break;
+        case "tomorrow":
+          dayIndex = new Date().getDay();
+          break;
+        default:
+          dayIndex = this.dayOffset(value, ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"], true);
+          if (dayIndex === -1) {
+            return -1;
+          }
+          break;
+      }
+    }
+    else {
+      dayIndex = new Date().getDay() -1;
+    }
+    return dayIndex;
   }
 }

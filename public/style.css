@@ -1,0 +1,106 @@
+body {
+  margin: 0;
+  padding: 0;
+}
+
+#app {
+  width: 100%;
+  height: 100vh;
+  padding-top: 40px;
+}
+
+.login-form {
+  -webkit-box-shadow: 0px 0px 3px 0.2px rgba(0,0,0,0.42);
+  -moz-box-shadow: 0px 0px 3px 0.2px rgba(0,0,0,0.42);
+  box-shadow: 0px 0px 3px 0.2px rgba(0,0,0,0.42);
+  border-radius: 10px;
+  width: max-content;
+  margin: auto;
+  background-color: white;
+  padding: 40px;
+}
+
+.login-form input {
+  display: block;
+  margin-bottom: 20px;
+  border: none;
+  border-bottom: 1px black solid;
+  width: 200px;
+  height: 30px;
+  font-size: 16px;
+}
+
+::-webkit-input-placeholder {
+  font-size: 16px;
+  text-align: center;
+}
+
+.its-me {
+  margin-top: 30px;
+  width: 20%;
+  height: auto;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  animation: spinner 10s infinite, glitch 3s infinite;
+  animation-delay: 0s, 0s;
+  animation-timing-function: linear, linear;
+  position: relative;
+}
+
+@keyframes glitch {
+  0% {
+    filter: invert(0);
+    top: 0;
+    left: 0;
+  }
+  
+  40% {
+    filter: invert(0);
+    top: 0;
+    left: 0;
+  }
+  
+  42% {
+    filter: invert(.8);
+    top: 5px;
+    left: 5px;
+  }
+  
+  44% {
+    filter: invert(0);
+    top: 0;
+    left: 0;
+  }
+  
+  47% {
+    filter: invert(.8);
+    top: -5px;
+    left: -5px;
+  }
+  
+  49% {
+    filter: invert(0);
+    top: 0;
+    left: 0;
+  }
+  
+  100% {
+    filter: invert(0);
+    top: 0;
+    
+  }
+}
+
+@keyframes spinner {
+    from {
+      -moz-transform: rotateY(0deg);
+      -ms-transform: rotateY(0deg);
+      transform: rotateY(0deg);
+    }
+    to {
+      -moz-transform: rotateY(-360deg);
+      -ms-transform: rotateY(-360deg);
+      transform: rotateY(-360deg);
+    }
+}
