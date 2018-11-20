@@ -1,0 +1,3 @@
+create table users (ID INTEGER PRIMARY KEY AUTOINCREMENT ,sender_psid STRING,first_name STRING,second_name STRING, class SMALLINT, optOut BOOLEAN);
+
+----init----

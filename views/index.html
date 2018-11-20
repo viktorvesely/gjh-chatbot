@@ -16,10 +16,10 @@
     <div id="app">
       <div class="login-form"> 
         <form>
-          <input type="text" placeholder="meno" name="id">
+          <input type="text" placeholder="meno" name="profile-id" v-model="inputText" @input="checkInput" spellcheck="false">
         </form>
       </div>
-      <img src="https://cdn.glitch.com/69a8ca3a-18d8-421a-912d-2c0f9593e89d%2Fjur_hronec_transprent.png?1542472300667" class="its-me">
+      <img class="its-me" :style="animation" src="https://cdn.glitch.com/69a8ca3a-18d8-421a-912d-2c0f9593e89d%2Fjur_hronec_transprent.png?1542472300667">
     </div>
     <script src="/page.js"></script>
   </body>

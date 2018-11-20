@@ -14,6 +14,7 @@ const Cache = require('./helpers/cache.js');
 const MessageHandler = require('./handlers/text.js');
 const SerieExecutor = require('./helpers/serieExecutor');
 const PostBackHandler = require('./handlers/postBacks.js');
+const Profile = require('./database/profile.js');
 
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 const WIT_ACCES_TOKEN = process.env.WIT_ACCES_TOKEN;

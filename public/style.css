@@ -28,6 +28,8 @@ body {
   width: 200px;
   height: 30px;
   font-size: 16px;
+  outline: none;
+  text-align: center;
 }
 
 ::-webkit-input-placeholder {
@@ -42,9 +44,6 @@ body {
   display: block;
   margin-left: auto;
   margin-right: auto;
-  animation: spinner 10s infinite, glitch 3s infinite;
-  animation-delay: 0s, 0s;
-  animation-timing-function: linear, linear;
   position: relative;
 }
 
@@ -63,8 +62,8 @@ body {
   
   42% {
     filter: invert(.8);
-    top: 5px;
-    left: 5px;
+    top: 8px;
+    left: 8px;
   }
   
   44% {
@@ -75,11 +74,35 @@ body {
   
   47% {
     filter: invert(.8);
-    top: -5px;
-    left: -5px;
+    top: -8px;
+    left: -10px;
   }
   
   49% {
+    filter: invert(0);
+    top: 0;
+    left: 0;
+  }
+  
+  56% {
+    filter: invert(0);
+    top: 0;
+    left: 0;
+  }
+  
+  58% {
+    filter: invert(0.8);
+    top: 8px;
+    left: 8px;
+  }
+  
+  60% {
+    filter: invert(0.8);
+    top: 8px;
+    left: 11px;
+  }
+  
+  62% {
     filter: invert(0);
     top: 0;
     left: 0;
