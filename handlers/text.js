@@ -7,15 +7,17 @@ const ReminderDB = require('../database/reminders.js');
 const BasicResponses = require('../responses/basic_responses.js');
 const request = require('request');
 const UserDb = require('../database/user.js');
+const Lunch = require('../interface/lunch.js');
 
 const reminderI = new ReminderInterface();
 const responses = new Responses();
 
 module.exports = class MessageHandler {
-  constructor (response, sender_psid, cache, originalText) {
+  constructor (response, profile, cache, originalText) {
     this.cache = cache;
     this.response = response;
-    this.sender_psid = sender_psid;
+    this.sender_psid = profile.fSender_psid();
+    this.profile = profile;
     this.originalText = originalText;
     let entities = this.entities = response.entities;
     let intent = this.intent = response.entities ? response.entities.intent : undefined;
@@ -80,14 +82,6 @@ module.exports = class MessageHandler {
   
   teacher_cabinet() {
     return this.ret("815");
-  }
-  
-  today_lunch() {
-    return new Promise(resolve => {
-      Utils.getGifURL("food").then((url) => {
-        resolve(new Response("text", "Jedlo").next("image", url).next("text", "... yummy"));
-      })
-    });
   }
   
   reminder_time() {
@@ -244,7 +238,111 @@ module.exports = class MessageHandler {
   subscribe_memes() {
     return this.ret("nie");
   }
-
+  
+  tell_why() {
+    return new Promise(resolve => {
+      let responseText;
+      
+      if (! this.response.entities.hasOwnProperty('why_object')) {
+        responseText = 'Nevedel som vyhodnotiť, na čo si sa pýtal 😕. Čoskoro sa to ale naučím!';
+      } else {
+        responseText = BasicResponses.tellWhy(this.response.entities);
+      }
+      
+      resolve(new Response('text', responseText));
+    });
+  }
+  
+  tell_activity() {
+    return new Promise(resolve => {
+      let responseText = BasicResponses.tellActivity();
+      resolve(new Response('text', responseText));
+    });
+  }
+  
+  tell_favourite() {
+    return new Promise(resolve => {
+      let responseText;
+      if (! this.response.entities.hasOwnProperty('favourite_obj')) {
+        responseText = 'Aši mi ušlo nejaké slovíčko, neviem 😕';
+      } else {
+        responseText = BasicResponses.tellFavourite(this.response.entities.favourite_obj[0].value);
+      }
+      resolve(new Response('text', responseText));
+    });
+  }
+  
+  say_something() {
+    return new Promise(resolve => {
+      let responseText = BasicResponses.saySomething();
+      resolve(new Response('text', responseText));
+    });
+  }
+  
+  tell_opinion() {
+    return new Promise(resolve => {
+      let responseText;
+      if (this.response.entities.hasOwnProperty('opinion_object')) {
+        let value = this.response.entities.opinion_object[0].value;
+        let opinion_obj = BasicResponses.getOpinionOn(value);
+        responseText = opinion_obj.text;
+        if (opinion_obj.hasOwnProperty('gif_keyword')) {
+          Utils.getGifURL(opinion_obj.gif_keyword).then(url => {
+            resolve(new Response("image", url).next("text", responseText));
+          });
+        } else if (opinion_obj.hasOwnProperty('gif_url')) {
+          resolve(new Response("image", opinion_obj.gif_url).next("text", responseText));
+        } else {
+          resolve(new Response("text", responseText));
+        }
+      } else {
+        responseText = 'Nevedel som vyhodnotiť, na čo si sa pýtal 😕. Čoskoro sa to ale naučím!';
+        resolve(new Response('text', responseText)); 
+      }
+    });
+  }
+  
+  get_lunch() {
+    return new Promise((resolve, reject) => {
+      
+      // Get date
+      let day_offset;
+      if (this.response.entities.hasOwnProperty('time_tomorrow')) {
+        console.log('tomorrow\'s lunch');
+        day_offset = 1;
+      } else if (this.response.entities.hasOwnProperty('time_day_after_tomorrow')) {
+        console.log('day after tomorrow\'s lunch');
+        day_offset = 2;
+      } else if (this.response.entities.hasOwnProperty('time_day')) {
+        console.log('lunch for ' + this.response.entities.time_day);
+        day_offset = Utils.dayOffset(this.response.entities.time_day[0].value, 
+                                 ["pondelok", "utorok", "streda", "stvrtok", "piatok", "sobota", "nedela"])
+      } else {
+        console.log('today\'s lunch');
+      }
+      
+      let getA = this.response.entities.hasOwnProperty('lunch_option_1');
+      let getB = this.response.entities.hasOwnProperty('lunch_option_2');
+      
+      Lunch.getLunchProperties(day_offset, getA, getB)
+        .then((properties) => {
+          let response = new Response('text', 'Papať budeš:')
+          properties.forEach((property) => response.next('text', property))
+          Utils.getGifURL('food').then((url) => {
+            response.next('image', url);
+          })
+          resolve(response)
+        })
+        .catch((err_msg) => resolve(new Response("text", err_msg)))
+    });
+    
+    // GIF - temporary solution
+    /*return new Promise(resolve => {
+      Utils.getGifURL("food").then((url) => {
+        resolve(new Response("text", "Jedlo").next("image", url).next("text", "... yummy"));
+      })
+    });*/
+  }
   
   e_swim() {
     return new Promise(resolve => {
@@ -275,72 +373,12 @@ module.exports = class MessageHandler {
         else {
           response.next("text", "enjoy your swim!");
         }
+        var endTime = Utils.fromUtcTimeToHours(data.periods[data.periods.length - 1].end);
+        response.next("text", "The swimming pool closes at " + endTime[0] + ":" + endTime[1]);
         resolve(response);
       })
     }); 
   }
   
-  tell_why() {
-    return new Promise(resolve => {
-      let responseText;
-      
-      if (! this.response['entities'].hasOwnProperty('why_object')) {
-        responseText = 'Nevedel som vyhodnotiť, na čo si sa pýtal 😕. Čoskoro sa to ale naučím!';
-      } else {
-        responseText = BasicResponses.tellWhy(this.response['entities']);
-      }
-      
-      resolve(new Response('text', responseText));
-    });
-  }
-  
-  tell_activity() {
-    return new Promise(resolve => {
-      let responseText = BasicResponses.tellActivity();
-      resolve(new Response('text', responseText));
-    });
-  }
-  
-  tell_favourite() {
-    return new Promise(resolve => {
-      let responseText;
-      if (! this.response['entities'].hasOwnProperty('favourite_obj')) {
-        responseText = 'Aši mi ušlo nejaké slovíčko, neviem 😕';
-      } else {
-        responseText = BasicResponses.tellFavourite(this.response['entities']['favourite_obj'][0].value);
-      }
-      resolve(new Response('text', responseText));
-    });
-  }
-  
-  say_something() {
-    return new Promise(resolve => {
-      let responseText = BasicResponses.saySomething();
-      resolve(new Response('text', responseText));
-    });
-  }
-  
-  tell_opinion() {
-    return new Promise(resolve => {
-      let responseText;
-      if(this.response['entities'].hasOwnProperty('opinion_object')) {
-        let value = this.response['entities']['opinion_object'][0].value;
-        let opinion_obj = BasicResponses.getOpinionOn(value);
-        responseText = opinion_obj.text;
-        if (opinion_obj.hasOwnProperty('gif_keyword')) {
-          Utils.getGifURL(opinion_obj.gif_keyword).then(url => {
-            resolve(new Response("image", url).next("text", responseText));
-          });
-        } else if (opinion_obj.hasOwnProperty('gif_url')) {
-          resolve(new Response("image", opinion_obj.gif_url).next("text", responseText));
-        } else {
-          resolve(new Response("text", responseText));
-        }
-      } else {
-        responseText = 'Nevedel som vyhodnotiť, na čo si sa pýtal 😕. Čoskoro sa to ale naučím!';
-        resolve(new Response('text', responseText)); 
-      }
-    });
-  }
 };
 

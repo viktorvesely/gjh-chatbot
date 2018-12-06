@@ -1,50 +1,82 @@
 var sql = require('sqlite3').verbose();
 
 class Profile {
-  constructor(sender_psid, onLoad=null) {
-    if (sender_psid && onLoad && typeof onLoad == "function") {
-      this.loadProfile().then(() => {
-        onLoad();
-      }, ()=> {
-        console.error("Database error occur see the log above for more details");
-      });
-    }
-    this.formatData(sender_psid || null);
+  constructor(sender_psid) {
+    this.formatData(sender_psid);
+    this._changed = false;
+    this.onLoad = this.loadProfile().then(() => {
+    }, (error)=> {
+      console.error(error);
+      console.error("Database error occur see the log above for more details");
+    });
+  }
+  
+  fOnLoad() {
+    return this.onLoad;
+  }
+  
+  fSender_psid() {
+    return this.sender_psid;
+  }
+  
+  fFirstName(value=null) {
+    this._changed = value === null ? this._changed : true;
+    return value === null ? this.firstName : (this.firstName = value);
+  }
+  fSecondName(value=null) {
+    this._changed = value === null ? this._changed : true;
+    return value === null ? this.firstName : (this.secondName = value);
+  }
+  fClassId(value=null) {
+    this._changed = value === null ? this._changed : true;
+    return value === null ? this.firstName : (this.classId = value);
+  }
+  fOptOut(value=null) {
+    this._changed = value === null ? this._changed : true;
+    return value === null ? this.firstName : (this.optOut = value);
   }
   
   init(sender_psid=null) {
     this.formatData(sender_psid || this.sender_psid, "", "", -1, false);
   }
   
-  loadProfile(sender_psid) {
-    return new Promise((resolve, reject) => {
-      var db = this.getDatabase();
-      
-      db.get("SELECT * from users WHERE sender_psid=? LIMIT 1", sender_psid, (err, row) => {
-        if (err) {
-          console.error(err);
-          reject();
-        } else {
-          resolve(row); 
-        }
-      })
-      
-      db.close();
-    });
-  }
-  
-  identify(sender_psid) {
-    this.sender_psid = sender_psid;
-  }
-  
-  exist() {
+  loadProfile(sender_psid=null) {
+    this.sender_psid = sender_psid || this.sender_psid || null;
     return new Promise((resolve, reject) => {
       var db = this.getDatabase();
       
       db.get("SELECT * from users WHERE sender_psid=? LIMIT 1", this.sender_psid, (err, row) => {
         if (err) {
-          console.error(err);
-          reject();
+          reject(err);
+        } else {
+          if (row === undefined) {
+            this.init();
+            this.save();
+          } else {
+            this.formatData(row.sender_psid, row.first_name, row.second_name, row.class, row.optOut);
+          }
+          resolve();
+        }
+      })
+      
+      db.close();
+    });
+    
+  }
+  
+  identify(sender_psid) {
+    this.sender_psid = sender_psid;
+    this._change = false;
+    this.onLoad = this.loadProfile();
+  }
+  
+  exist() {
+    return new Promise((resolve, reject) => {
+      var db = this.getDatabase();
+      console.log(this.sender_psid);
+      db.get("SELECT * from users WHERE sender_psid=? LIMIT 1", this.sender_psid, (err, row) => {
+        if (err) {
+          reject(err);
         } else {
           resolve(row === undefined ? false : true); 
         }
@@ -59,7 +91,6 @@ class Profile {
       this.exist().then( exist => {
         var db = this.getDatabase();
         let data = Object.values(this.exportData());
-        console.log(exist);
         if (exist) {
           data.push(data.splice(0,1)[0]); // switch sender_psid to last position
           db.run("UPDATE users SET first_name=?, second_name=?, class=?, optOut=? WHERE sender_psid=?", data, err=> {
@@ -122,17 +153,11 @@ class Profile {
     });
   }
   
-  fFirstName(value=null) {
-    return value === null ? this.firstName : (this.firstName = value);
-  }
-  fSecondName(value=null) {
-    return value === null ? this.firstName : (this.secondName = value);
-  }
-  fClassId(value=null) {
-    return value === null ? this.firstName : (this.classId = value);
-  }
-  fOptOut(value=null) {
-    return value === null ? this.firstName : (this.optOut = value);
+  end() {
+    if (this._changed) {
+      this.save();
+      this._changed = false;
+    }
   }
 }
 

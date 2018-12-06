@@ -172,7 +172,12 @@ module.exports = {
     }
     else {
       dayIndex = new Date().getDay() -1;
+      dayIndex = dayIndex === -1 ? 6 : dayIndex;
     }
     return dayIndex;
+  },
+  
+  getLunchJSON() {
+    console.log('hi');
   }
 }

@@ -115,21 +115,28 @@ function messageRejected (response, sender_psid) {
 function handleMessage(sender_psid, received_message) {
   let response;
   var text = received_message.text;
-
   // Check if the message contains text
   if (text) {    
-
+    var profile = new Profile(sender_psid); // loads profile from database
     //odstrani diakritiku 
     let strippedText = text.normalize('NFD').replace(/[\u0300-\u036f]/g, "");
 
     client.message(strippedText.replace(".", ""), {})
     .then((data) => {
-      let messageHandler = new MessageHandler(data, sender_psid, cache, text);
-      messageHandler.resolve(sender_psid).then(response => {
-        messageAccepted(response, sender_psid)
-      }, response => {
-        messageRejected(response, sender_psid);
-      })
+      profile.fOnLoad().then(() => {
+      
+        let messageHandler = new MessageHandler(data, profile, cache, text);
+        let messagePromise = messageHandler.resolve(sender_psid);
+        messagePromise.then(response => {
+          messageAccepted(response, sender_psid);
+        }, response => {
+          messageRejected(response, sender_psid);
+        });
+        messagePromise.finally(() => {
+          profile.end();
+        });
+        
+      });
     }).catch(console.error);
 
   } else if (received_message.attachments) {
