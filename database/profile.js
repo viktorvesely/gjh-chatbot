@@ -25,15 +25,15 @@ class Profile {
   }
   fSecondName(value=null) {
     this._changed = value === null ? this._changed : true;
-    return value === null ? this.firstName : (this.secondName = value);
+    return value === null ? this.secondName : (this.secondName = value);
   }
   fClassId(value=null) {
     this._changed = value === null ? this._changed : true;
-    return value === null ? this.firstName : (this.classId = value);
+    return value === null ? this.classId : (this.classId = value);
   }
   fOptOut(value=null) {
     this._changed = value === null ? this._changed : true;
-    return value === null ? this.firstName : (this.optOut = value);
+    return value === null ? this.optOut : (this.optOut = value);
   }
   
   init(sender_psid=null) {
@@ -45,7 +45,7 @@ class Profile {
     return new Promise((resolve, reject) => {
       var db = this.getDatabase();
       
-      db.get("SELECT * from users WHERE sender_psid=? LIMIT 1", this.sender_psid, (err, row) => {
+      db.get("SELECT * FROM users WHERE sender_psid=? LIMIT 1", this.sender_psid, (err, row) => {
         if (err) {
           reject(err);
         } else {
@@ -87,35 +87,33 @@ class Profile {
   }
   
   save(onError=null, onSuccess=null) {
-    if (this.validateData()) {
-      this.exist().then( exist => {
-        var db = this.getDatabase();
-        let data = Object.values(this.exportData());
-        if (exist) {
-          data.push(data.splice(0,1)[0]); // switch sender_psid to last position
-          db.run("UPDATE users SET first_name=?, second_name=?, class=?, optOut=? WHERE sender_psid=?", data, err=> {
-            if (err) {
-              console.error(err);
-              onError === null ? null : onError();
-            } else {
-              onSuccess === null ? null : onSuccess();
-            }
-          });
-        } else {
-          db.run("INSERT INTO users(sender_psid,first_name,second_name,class,optOut) VALUES(?,?,?,?,?)", data, err => {
-            if (err) {
-              console.error(err);
-              onError === null ? null : onError();
-            } else {
-              onSuccess === null ? null : onSuccess();
-            }
-          })
-        }
-        db.close();
-      }, () => {
-        onError === null ? null : onError();
-      })
-    }
+    this.exist().then( exist => {
+      var db = this.getDatabase();
+      let data = Object.values(this.exportData());
+      if (exist) {
+        data.push(data.splice(0,1)[0]); // switch sender_psid to last position
+        db.run("UPDATE users SET first_name=?, second_name=?, class=?, optOut=? WHERE sender_psid=?", data, err=> {
+          if (err) {
+            console.error(err);
+            onError === null ? null : onError();
+          } else {
+            onSuccess === null ? null : onSuccess();
+          }
+        });
+      } else {
+        db.run("INSERT INTO users(sender_psid,first_name,second_name,class,optOut) VALUES(?,?,?,?,?)", data, err => {
+          if (err) {
+            console.error(err);
+            onError === null ? null : onError();
+          } else {
+            onSuccess === null ? null : onSuccess();
+          }
+        })
+      }
+      db.close();
+    }, () => {
+      onError === null ? null : onError();
+    })
   }
   
   

@@ -158,6 +158,7 @@ module.exports = {
       switch (value) {
         case "today":
           dayIndex = new Date().getDay() -1;
+          dayIndex = dayIndex === -1 ? 6 : dayIndex;
           break;
         case "tomorrow":
           dayIndex = new Date().getDay();

@@ -25,7 +25,7 @@ module.exports = class Responses {
           "type":"template",
           "payload":{
             "template_type":"button",
-            "text": "Tak poďme na to. Som uväznený duch Jura Hronca. Super vtip, čo? Budem sa ti snažiť spríjemniť život na GJH. Pár vhodných vecí na začiatok: ",
+            "text": "Pár vhodných vecí na začiatok: ",
             "buttons":[
               {
                 "type": "postback",

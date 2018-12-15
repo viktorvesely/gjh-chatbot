@@ -20,16 +20,12 @@ module.exports = class Actions {
   }
   
   facebookRequest(structure) {
-    request({
-      "uri": "https://graph.facebook.com/v2.6/me/messages",
-      "qs": { "access_token": this.__PAGE_ACCESS_TOKEN },
-      "method": "POST",
-      "json": structure
-    }, (err, res, body) => {
-      if (!err) {
-      } else {
-        console.error("Unable to send message:" + err);
-      }
+    
+    const qs = 'access_token=' + encodeURIComponent(this.__PAGE_ACCESS_TOKEN); // Here you'll need to add your PAGE TOKEN from Facebook
+    return fetch('https://graph.facebook.com/v2.6/me/messages?' + qs, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(structure)
     });
   }
   
@@ -126,14 +122,50 @@ module.exports = class Actions {
   }
   
   setGreetingMsg() {
-    let request_body = {"greeting":[
+    let request_body_first = {"get_started": {"payload": "button_get_started"}};
+    let request_body_second = {"greeting":[
       {
         "locale": "default",
-        "text": "Posťažuj sa o študentskom živote, na komplikované veci zo zásady neodpisujem"
+        "text": "Posťažuj sa o študentskom živote, na komplikované veci zo zásady neodpisujem",
       }
     ]};
-    let request_body_first = {"get_started": {"payload": "button_get_started"}};
+    this.setPersistentMenu();
     this.facebookRequest(request_body_first);
+    this.facebookRequest(request_body_second);
+  }
+  
+  setPersistentMenu() {
+    let request_body = {
+      "persistent_menu":[
+        {
+          "locale":"default",
+          "composer_input_disabled": false,
+          "call_to_actions":[
+            {
+              "title":"Zistiť obed",
+              "type":"nested",
+              "call_to_actions":[
+                {
+                  "title":"A-čko a B-čko",
+                  "type":"postback",
+                  "payload":"button_lunch"
+                },
+                {
+                  "title":"A-čko",
+                  "type":"postback",
+                  "payload":"button_lunch_A"
+                },
+                {
+                  "title":"B-čko",
+                  "type":"postback",
+                  "payload":"button_lunch_B"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
     this.facebookRequest(request_body);
   }
   

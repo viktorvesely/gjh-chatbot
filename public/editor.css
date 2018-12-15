@@ -1,0 +1,15 @@
+.menu {
+  margin: auto;
+}
+
+.errorMsg {
+  position: fixed;
+  bottom: 30px;
+  left: 25px;
+  box-sizing: border-box;
+  padding: 8px 15px;
+  background-color: #d33051;
+  border-radius: 12px;
+  border: 1px red solid;
+  text-align: center;
+}

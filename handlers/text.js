@@ -14,6 +14,9 @@ const responses = new Responses();
 
 module.exports = class MessageHandler {
   constructor (response, profile, cache, originalText) {
+    if (typeof response === "undefined") {
+      return this;
+    }
     this.cache = cache;
     this.response = response;
     this.sender_psid = profile.fSender_psid();
@@ -23,8 +26,15 @@ module.exports = class MessageHandler {
     let intent = this.intent = response.entities ? response.entities.intent : undefined;
   }
   
-  resolve (sender_psid) {
-    this.sender_psid = sender_psid;
+  simulate(intent, entities, profile, cache) {
+    this.entities = entities;
+    this.profile = profile;
+    this.sender_psid = profile.fSender_psid();
+    this.cache = cache;
+    return this[intent]();
+  }
+  
+  resolve () {
     let entities = this.entities;
     let intent = this.intent;
     if (Utils.isConfident(intent)) {
@@ -134,9 +144,11 @@ module.exports = class MessageHandler {
   
   welcome_message() {
     return new Promise((resolve, reject) => {
-      responses.welcomeMessage(this.sender_psid, msg => {
-        resolve(new Response("text", msg));
-      });
+      if (this.profile.fFirstName()) {
+        resolve(new Response("text", "*Veľmi usilovne mávam* - asi to ale nevidíš, " + this.profile.fFirstName() + "."));
+      } else {
+        resolve(new Response("text", "Ahoj, " + this.sender_psid + "#. Zatiaľ ťa poznám iba takto. Nehanbi sa a predstav sa mi.").next("text", "Nekúšem ;)."));
+      }
     });
   }
   
@@ -174,14 +186,12 @@ module.exports = class MessageHandler {
   
   tell_user_name() {
     return new Promise(resolve => {
-      UserDb.checkIfExist(this.sender_psid, (exist) => {
-        if (exist) {
-          resolve(new Response("text", exist[0]["first_name"] + ", prečo sa pýtaš?"));
-        } else {
-          resolve(new Response("text", "Ahoj, " + this.sender_psid + "#. Zaťiaľ ťa poznám iba takto. Ale pokojne sa mi predstav."));
-        }
-      });
-     })
+      if (this.profile.fFirstName()) {
+        resolve(new Response("text", this.profile.fFirstName() + " " + this.profile.fSecondName() + ", prečo sa pýtaš?"));
+      } else {
+        resolve(new Response("text", "Ahoj, " + this.sender_psid + "#. Zaťiaľ ťa poznám iba takto. Ale pokojne sa mi predstav."));
+      }
+    });
   }
   
   tell_bot_name() {
@@ -302,35 +312,34 @@ module.exports = class MessageHandler {
     });
   }
   
+  
+  
   get_lunch() {
     return new Promise((resolve, reject) => {
       
       // Get date
       let day_offset;
-      if (this.response.entities.hasOwnProperty('time_tomorrow')) {
+      if (this.entities.hasOwnProperty('time_tomorrow')) {
         console.log('tomorrow\'s lunch');
         day_offset = 1;
-      } else if (this.response.entities.hasOwnProperty('time_day_after_tomorrow')) {
+      } else if (this.entities.hasOwnProperty('time_day_after_tomorrow')) {
         console.log('day after tomorrow\'s lunch');
         day_offset = 2;
-      } else if (this.response.entities.hasOwnProperty('time_day')) {
-        console.log('lunch for ' + this.response.entities.time_day);
-        day_offset = Utils.dayOffset(this.response.entities.time_day[0].value, 
+      } else if (this.entities.hasOwnProperty('time_day')) {
+        console.log('lunch for ' + this.entities.time_day);
+        day_offset = Utils.dayOffset(this.entities.time_day[0].value, 
                                  ["pondelok", "utorok", "streda", "stvrtok", "piatok", "sobota", "nedela"])
       } else {
         console.log('today\'s lunch');
       }
       
-      let getA = this.response.entities.hasOwnProperty('lunch_option_1');
-      let getB = this.response.entities.hasOwnProperty('lunch_option_2');
+      let getA = this.entities.hasOwnProperty('lunch_option_1');
+      let getB = this.entities.hasOwnProperty('lunch_option_2');
       
-      Lunch.getLunchProperties(day_offset, getA, getB)
+      Lunch.getLunchText(day_offset, getA, getB)
         .then((properties) => {
-          let response = new Response('text', 'Papať budeš:')
+          let response = new Response('text', undefined) //ERR
           properties.forEach((property) => response.next('text', property))
-          Utils.getGifURL('food').then((url) => {
-            response.next('image', url);
-          })
           resolve(response)
         })
         .catch((err_msg) => resolve(new Response("text", err_msg)))
@@ -357,25 +366,33 @@ module.exports = class MessageHandler {
         var response = null;
         for (let i = 0; i < data.periods.length; ++i) {
           let period = data.periods[i];
-          if (period.lines < 5 && period.lines !== -1) {
+          if (data.closed) {
+            resolve(new Response("text", "The pool is closed for today 😪"));
+            return;
+          } else if (period.lines < 5) {
             if (isAlright) {
               response = new Response("text", "Yes, but watch out for");
             }
             isAlright = false;
             var start = Utils.fromUtcTimeToHours(period.start);
             var end = Utils.fromUtcTimeToHours(period.end);
-            response.next("text", start[0] + ":" + start[1]  + " - " + end[0] + ":" + end[1] + " there are only " + period.lines + " lines opened");
+            if (period.lines === 0) {
+              response.next("text", start[0] + ":" + start[1]  + " - " + end[0] + ":" + end[1] + " the pool is closed");
+            } else {
+              response.next("text", start[0] + ":" + start[1]  + " - " + end[0] + ":" + end[1] + " there are only " + period.lines + " lines opened");
+            }
           }
         }
         if (isAlright) {
           response = new Response("text", "Yes, enjoy."); 
         }
-        else {
+        let startTime = Utils.fromUtcTimeToHours(data.periods[0].start);
+        var endTime = Utils.fromUtcTimeToHours(data.periods[data.periods.length - 1].end);
+        response.next("text", `The swimming pool opens at ${startTime[0]}:${startTime[1]} and closes at ${endTime[0]}:${endTime[1]}`);
+        resolve(response);
+        if (!isAlright) {
           response.next("text", "enjoy your swim!");
         }
-        var endTime = Utils.fromUtcTimeToHours(data.periods[data.periods.length - 1].end);
-        response.next("text", "The swimming pool closes at " + endTime[0] + ":" + endTime[1]);
-        resolve(response);
       })
     }); 
   }

@@ -2,7 +2,8 @@ new Vue({
   el: "#app",
   data: {
     correctInput: false,
-    inputText: ""
+    inputText: "",
+    output: "",
   },
   methods: {
     checkInput() {
@@ -11,6 +12,27 @@ new Vue({
       } else {
         this.correctInput = false;
       }
+    },
+    login(e) {
+      e.preventDefault();
+      var context = this;
+      $.ajax("/login", {
+        contentType: "application/json",
+        data: JSON.stringify({userId: this.inputText}),
+        method: "POST",
+        complete: (res) => {
+          let response = res.responseJSON;
+          if (response.success) {
+            context.output = "";
+            this.correctInput = true;
+            setTimeout(()=> {
+              window.location.href = "/shout";
+            }, 1000);
+          } else {
+            context.output = response.msg;
+          }
+        }
+      });
     }
   },
   computed: {

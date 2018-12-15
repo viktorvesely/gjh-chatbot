@@ -1,10 +1,16 @@
 const Response = require('../responses/responseObject.js');
 const ReminderDB = require('../database/reminders.js');
 const UserDB = require('../database/user.js');
+const Responses = require('../responses/responses.js');
+const WitEntities = require('../wit/entities');
+const TextHandler = require('./text');
+
+const responses = new Responses();
 
 module.exports = class PostBackHandler {
-  constructor(sender_psid, postBack, cache) {
-    this.sender_psid = sender_psid;
+  constructor(profile, postBack, cache) {
+    this.sender_psid = profile.fSender_psid();
+    this.profile = profile;
     this.postBack = postBack;
     this.cache = cache;
   }
@@ -12,7 +18,7 @@ module.exports = class PostBackHandler {
   resolve() {
     let handleFunction = this[this.postBack];
     if (handleFunction !== undefined) {
-      return this[this.postBack]();
+      return handleFunction.call(this);
     }
     else {
       return this.ret("Uhmm, niečo sa pokazilo. My bad.", "invalid postback name: " + this.postBack);
@@ -31,7 +37,6 @@ module.exports = class PostBackHandler {
   }
   
   button_save_reminder_yes () {
-    console.log(this);
     let reminder = this.cache.get(this.sender_psid, "reminder");
     if (reminder === undefined) {
       return this.ret("Neskoro");
@@ -57,11 +62,37 @@ module.exports = class PostBackHandler {
   button_right_name_yes() {
     let username = this.cache.get(this.sender_psid, "username");
     let names = username.split(" ");
+    this.profile.fFirstName(names[0]);
+    this.profile.fSecondName(names[1]);
     UserDB.addUser(this.sender_psid, names[0], names[1]);
     return this.ret("Tvoje meno je navždy zaznamenané. No nie je to super?");
   }
   
+  
+  // Lunch postbacks
   button_right_name_no() {
     return this.ret("Tak teda nič.");
+  }
+  
+  button_lunch() {    
+    let entities = new WitEntities().get(); // no entities are required for this handler
+    return new TextHandler().simulate("get_lunch", entities, this.profile, this.cache);
+  }
+   
+  button_lunch_A() {
+    let entities = new WitEntities("lunch_option_1", "acko").get(); // use function next for next entity
+    return new TextHandler().simulate("get_lunch", entities, this.profile, this.cache);
+  } 
+  
+  button_lunch_B() {
+    let entities = new WitEntities("lunch_option_2", "bcko").get();
+    return new TextHandler().simulate("get_lunch", entities, this.profile, this.cache);
+  }
+  
+  // Get started
+  button_get_started() {
+    return new Promise(resolve => {
+      resolve(new Response("text", "Tak poďme na to. Som uväznený duch Jura Hronca.").next("text", "... `Super vtip, čo?").next("text", "Budem sa ti snažiť spríjemniť život na GJH.").next("generic", responses.whatCanIDo(this.sender_psid)));
+    });  
   }
 }

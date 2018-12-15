@@ -8,6 +8,9 @@ const
   app = express().use(body_parser.json()); // creates express http server
 
 const {Wit, log} = require('node-wit');
+const cookieParser = require('cookie-parser');
+const session = require('express-session');
+const shajs = require('sha.js');
 const attachmentHandler = require('./handlers/attachment.js');
 const Actions = require('./helpers/actions.js');
 const Cache = require('./helpers/cache.js');
@@ -15,6 +18,8 @@ const MessageHandler = require('./handlers/text.js');
 const SerieExecutor = require('./helpers/serieExecutor');
 const PostBackHandler = require('./handlers/postBacks.js');
 const Profile = require('./database/profile.js');
+const Pipeline = require('./database/pipeline.js');
+const TimeTableManager = require('./timetable/manager.js');
 
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 const WIT_ACCES_TOKEN = process.env.WIT_ACCES_TOKEN;
@@ -30,11 +35,79 @@ const client = new Wit({
 });
 
 app.use(express.static('public'));
+app.use(cookieParser());
+
+app.use(session({
+    key: 'user_sid',
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    genid: function(req) {
+      return shajs('sha256').update(Date.now()).digest('hex'); // use UUIDs for session IDs
+    },
+    cookie: { 
+      secure: true
+    }
+}));
 
 app.listen(process.env.PORT || 1337, () => console.log('webhook is listening'));
 
 app.get('/', (req, res) => {
   res.sendFile(__dirname +  '/views/index.html');
+});
+
+app.post('/allPipes', (req, res) => {
+  req.session.reload(() => {
+    let pipeline = new Pipeline(req.session.userId);
+    if (pipeline.isOwner()) {
+      pipeline.getAllPipelines().then((pipelines) => {
+        res.send({
+          sucess: true,
+          pipelines: pipelines
+        });
+      },
+                              () => {
+        res.send({
+          success: false,
+          msg: "There was some error in sql. Check console."
+        });
+      });
+    } else {
+      res.send({
+        success: false,
+        msg: "You lost owner-ship... weird. Check session."
+      });
+    }
+  });
+});
+
+app.get('/shout', (req, res) => {
+  req.session.reload(() => {
+    let pipeline = new Pipeline(req.session.userId);
+    if (pipeline.isOwner()) {
+      res.sendFile(__dirname + '/views/pipelineEditor.html');
+    } else {
+      res.sendFile(__dirname +  '/views/shout.html'); 
+    }
+  });
+});
+
+app.post('/login', (req, res) => {
+  let body = req.body;
+  var pipeline = new Pipeline(body.userId);
+  pipeline.fOnLoad().then(() => {
+    let hash = shajs('sha256').update(body.userId + Date.now()).digest('hex');
+    req.session.userId = body.userId;
+    res.cookie("user", hash).send({
+      success: true
+    });
+  },
+                         () => {
+    res.send({
+      success: false,
+      msg: "something is wrong"
+    })
+  });
 });
 
 app.post('/webhook', (req, res) => {  
@@ -80,7 +153,6 @@ app.get('/webhook', (req, res) => {
   }
 });
 
-actions.setGreetingMsg();
 
 function messageAccepted (response, sender_psid) {
   if (response.hasError()) {
@@ -100,6 +172,9 @@ function messageAccepted (response, sender_psid) {
         break;
       case "image":
         todos.push(() => { return actions.sendAttachment(sender_psid, msg.type, msg.value); });
+        break;
+      case "generic":
+        todos.push(() => { return actions.facebookRequest(msg.value); });
         break;
     }
   }
@@ -126,7 +201,7 @@ function handleMessage(sender_psid, received_message) {
       profile.fOnLoad().then(() => {
       
         let messageHandler = new MessageHandler(data, profile, cache, text);
-        let messagePromise = messageHandler.resolve(sender_psid);
+        let messagePromise = messageHandler.resolve();
         messagePromise.then(response => {
           messageAccepted(response, sender_psid);
         }, response => {
@@ -153,17 +228,22 @@ function handleMessage(sender_psid, received_message) {
   }
 }
 
-
 function handlePostback(sender_psid, received_postback) {
-  
   let payload = received_postback.payload;
+  var profile = new Profile(sender_psid);
   
-  let handler = new PostBackHandler(sender_psid, payload, cache);
-  handler.resolve().then(response => {
-      messageAccepted(response, sender_psid)
-  }, response => {
-    messageRejected(response, sender_psid);
-  })
+  profile.fOnLoad().then(() => {
+    let postBackHandler = new PostBackHandler(profile, payload, cache);
+    let postBackPromise = postBackHandler.resolve();
+    postBackPromise.then(response => {
+        messageAccepted(response, sender_psid)
+      }, response => {
+        messageRejected(response, sender_psid);
+      });
+    postBackPromise.finally(() => {
+      profile.end();
+    })
+  });
   return;
   
  /* switch(payload) {

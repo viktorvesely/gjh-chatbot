@@ -1,0 +1,3 @@
+create table pipelines (ID INTEGER PRIMARY KEY AUTOINCREMENT,userId STRING,flags STRING);
+
+// init

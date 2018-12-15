@@ -20,6 +20,17 @@ body {
   padding: 40px;
 }
 
+.response {
+  margin: auto;
+  box-sizing: border-box;
+  background-color: white;
+  padding: 15px;
+  font-family: "Helvetica";
+  text-align: center;
+  color: black;
+  font-size: 18px;
+}
+
 .login-form input {
   display: block;
   margin-bottom: 20px;

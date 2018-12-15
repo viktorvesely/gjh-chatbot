@@ -1,5 +1,5 @@
 const request = require('request');
-const translator = {
+const translate = {
   drink: 'Nápoj',
   side: 'Príloha',
   salad: 'Šalát',
@@ -143,31 +143,30 @@ module.exports = {
     })
   },
   
-  extractElements(arr, obj) {
-    for (var key in obj) {
-      arr.push(translator[key] + ': ' + obj[key])
+  objectToText(obj) {
+    let s = "";
+    for (var meal_type in obj) {
+      s += translate[meal_type] + ': ' + obj[meal_type] + '\u000A';
     }
+    return s;
   },
   
-  getLunchProperties(day_offset, getA, getB) {
+  getLunchText(day_offset, getA, getB) {
     return new Promise((resolve, reject) => {
       let properties = []
       let getBoth = (getA && getB) || (!getA && !getB) //XNOR
       module.exports.getLunchObject(day_offset)
         .then((lunch_obj) => {
+          properties.push('Papať budeš:')
           if (getBoth) {
-            properties.push('Áčko:')
-            module.exports.extractElements(properties, lunch_obj.A)
-            properties.push('Béčko:')
-            module.exports.extractElements(properties, lunch_obj.B)
+            properties.push('A-čko:\u000A' + module.exports.objectToText(lunch_obj.A))
+            properties.push('B-čko:\u000A' + module.exports.objectToText(lunch_obj.B))
           } else if (getA) {
-            module.exports.extractElements(properties, lunch_obj.A)
+            properties.push(module.exports.objectToText(lunch_obj.A))
           } else if (getB) {
-            module.exports.extractElements(properties, lunch_obj.B)
+            properties.push(module.exports.objectToText(lunch_obj.B))
           } 
-          properties.push('A k tomu:')
-          module.exports.extractElements(properties, lunch_obj.common)
-        
+          properties.push('A k tomu:\u000A' + module.exports.objectToText(lunch_obj.common))        
           resolve(properties);
       })
     });
