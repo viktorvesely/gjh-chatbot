@@ -8,6 +8,8 @@ const BasicResponses = require('../responses/basic_responses.js');
 const request = require('request');
 const UserDb = require('../database/user.js');
 const Lunch = require('../interface/lunch.js');
+const gTimeTableManager = require('../timetable/manager.js');
+const ContinualResponse = require('./continualResponses.js');
 
 const reminderI = new ReminderInterface();
 const responses = new Responses();
@@ -22,6 +24,7 @@ module.exports = class MessageHandler {
     this.sender_psid = profile.fSender_psid();
     this.profile = profile;
     this.originalText = originalText;
+    this.continualResponse = new ContinualResponse(profile, cache, originalText);
     let entities = this.entities = response.entities;
     let intent = this.intent = response.entities ? response.entities.intent : undefined;
   }
@@ -29,6 +32,7 @@ module.exports = class MessageHandler {
   simulate(intent, entities, profile, cache) {
     this.entities = entities;
     this.profile = profile;
+    this.continualResponse = new ContinualResponse(profile, cache, undefined);
     this.sender_psid = profile.fSender_psid();
     this.cache = cache;
     return this[intent]();
@@ -83,7 +87,30 @@ module.exports = class MessageHandler {
   }
   
   current_lesson() {
-    return this.ret("Teraz máš nemčinu 303. Legit.");
+    return new Promise((resolve, reject) => {
+      if (!this.profile.fClassId()) {
+        this.continualResponse.expect("get_class_id");
+        resolve(new Response("text", "Ešte neviem do akej triedy chodíš. Napíš mi meno triedy.").next("text", "Napríklad ak do 3.C, tak napíš III.C"));
+        return;
+      }
+      gTimeTableManager.getCurrentLesson("113003").then(lessons => {
+        if (lessons) {
+          let response;
+          lessons.forEach((lesson, i) => {
+            if (i === 0) {
+              response = new Response("text", `${lesson.subject} v ${lesson.room} s ${lesson.teacher}`);
+            } else {
+              response.next("text", `${lesson.subject} v ${lesson.room} s ${lesson.teacher}`);
+            }
+          });
+          resolve(response);
+        } else {
+          resolve(new Response("text", "Nemáš žiadnu. To je ale slasti!"))
+        }
+      }).catch(e => {
+        reject(new Response("text", "Nedokážem načítať tvoje hodiny :(").setError(e));
+      });
+    });
   }
   
   spesific_lesson() {

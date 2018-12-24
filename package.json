@@ -18,7 +18,8 @@
     "sqlite": "^3.0.0",
     "cookie-parser": "^1.4.3",
     "sha.js": "^2.4.11",
-    "express-session": "^1.15.6"
+    "express-session": "^1.15.6",
+    "fast-levenshtein": "^2.0.6"
   },
   "engines": {
     "node": "10"

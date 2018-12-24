@@ -19,7 +19,7 @@ const SerieExecutor = require('./helpers/serieExecutor');
 const PostBackHandler = require('./handlers/postBacks.js');
 const Profile = require('./database/profile.js');
 const Pipeline = require('./database/pipeline.js');
-const TimeTableManager = require('./timetable/manager.js');
+const ContinualResponse = require('./handlers/continualResponses.js');
 
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 const WIT_ACCES_TOKEN = process.env.WIT_ACCES_TOKEN;
@@ -183,7 +183,8 @@ function messageAccepted (response, sender_psid) {
 
 function messageRejected (response, sender_psid) {
   console.error(response.error);
-  actions.callSendAPI(sender_psid, "Ou, toto je nepríjemné. Niečo sa pokazilo. 😞");
+  let customMsg = response.type === "text" && !!response.value;
+  actions.callSendAPI(sender_psid, customMsg ? response.value : "Ou, toto je nepríjemné. Niečo sa pokazilo. 😞");
 }
 
 // Handles messages events
@@ -199,18 +200,31 @@ function handleMessage(sender_psid, received_message) {
     client.message(strippedText.replace(".", ""), {})
     .then((data) => {
       profile.fOnLoad().then(() => {
-      
-        let messageHandler = new MessageHandler(data, profile, cache, text);
-        let messagePromise = messageHandler.resolve();
-        messagePromise.then(response => {
-          messageAccepted(response, sender_psid);
-        }, response => {
-          messageRejected(response, sender_psid);
-        });
-        messagePromise.finally(() => {
-          profile.end();
-        });
-        
+        let continualConversationHandler = new ContinualResponse(profile, cache, text);
+        let continualConversationPromise = continualConversationHandler.resolve(); // inject before text handler
+        if (continualConversationPromise) {
+          
+          continualConversationPromise.then(response => {
+            messageAccepted(response, sender_psid);
+          }, response => {
+            messageRejected(response, sender_psid);
+          });
+          continualConversationPromise.finally(() => {
+            profile.end();
+          })
+        } else {
+          
+          let messageHandler = new MessageHandler(data, profile, cache, text);
+          let messagePromise = messageHandler.resolve();
+          messagePromise.then(response => {
+            messageAccepted(response, sender_psid);
+          }, response => {
+            messageRejected(response, sender_psid);
+          });
+          messagePromise.finally(() => {
+            profile.end();
+          });
+        }
       });
     }).catch(console.error);
 

@@ -2,7 +2,7 @@ module.exports = class Cache {
   constructor() {
     this.cache = {};
   }
-  
+
   set(sender_psid, what, value) {
     if (!this.cache.hasOwnProperty(sender_psid)) {
       this.cache[sender_psid] = {};

@@ -13,7 +13,7 @@ function extractFood(arr) {
   // '16037 Zemiaky s maslom a petržlenovou vňaťou', - side dishes are always around 16000
   // '1027 Ovocný nápoj' - drinks are always around 1000
   // '24XXX Šalát cviklový' - salads are always around 24000
-  // '10019 Ryba v syrovom cestíčku' - mains get all other numbers
+  // '10019 Ryba v syrovom cestíčku' - mains get all the other numbers
   // 'ovocný nápoj' - extras do not have numbers
   return new Promise((resolve, reject) => {
     let properties = []
@@ -136,7 +136,7 @@ module.exports = {
               // Q: Extract whole array? What is the structure?
             }
           } else { // If the array is empty (e.g. weekend, during holidays)
-            reject("Jedáleň nevarí")
+            reject("Jedáleň vtedy nevarí 😕")
           }
         })
         .catch((err) => reject(err));
@@ -154,7 +154,7 @@ module.exports = {
   getLunchText(day_offset, getA, getB) {
     return new Promise((resolve, reject) => {
       let properties = []
-      let getBoth = (getA && getB) || (!getA && !getB) //XNOR
+      let getBoth = (getA && getB) || (!getA && !getB) //XNOR; if the user does not specify A or B, we assume they want both, A and B
       module.exports.getLunchObject(day_offset)
         .then((lunch_obj) => {
           properties.push('Papať budeš:')
@@ -168,7 +168,10 @@ module.exports = {
           } 
           properties.push('A k tomu:\u000A' + module.exports.objectToText(lunch_obj.common))        
           resolve(properties);
-      })
+        })
+        .catch((err_msg) => {
+          reject(err_msg);
+        })
     });
   }
 }

@@ -1,3 +1,11 @@
 create table users (ID INTEGER PRIMARY KEY AUTOINCREMENT ,sender_psid STRING,first_name STRING,second_name STRING, class SMALLINT, optOut BOOLEAN);
 
 ----init----
+
+alter table
+class SMALLINT -> class STRING
+deleted optOut (it will be added later if needed)
+
+create table users (ID INTEGER PRIMARY KEY AUTOINCREMENT ,sender_psid STRING,first_name STRING,second_name STRING, class STRING);
+
+----re-init-----

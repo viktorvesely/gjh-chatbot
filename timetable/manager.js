@@ -3,12 +3,78 @@ const Parser = require('./parser.js');
 const Table = require('./table.js');
 const Days = require('../helpers/days.js');
 
-module.exports = class TimeTableManager {
+class TimeTableManager {
   constructor() {
-    this.cache = {
-      json: null,
-      last:0 
-    };
+    this.cacheLast = 0;
+    this.isLoading = false;
+    this.json = null;
+  }
+  
+  getCurrentLesson(classId) {
+    return new Promise(resolve => {
+      let today = Days.today();
+      today = 4;
+      let period = this.getPeriodFromTime(Date.now());
+      period = 1;
+      let table = new Table(classId);
+      table.load().then(() => {
+        if (typeof table.days === "undefined") {
+          this.load().then(() => {
+            let builtTable = this.parser.build(classId);
+            resolve(builtTable.get(today, period));
+          });
+        } else {
+          resolve(table.get(today, period));
+        }
+      });
+    });
+  }
+  
+  load() {
+    if (this.isLoading) {
+      return this.onLoad;
+    }
+    this.isLoading = true;
+    this.onLoad = new Promise((resolve, reject) => {
+      if (this.recache()) {
+        request('https://ssnovohradska.edupage.org/timetable/', (error, response, body) => {
+          let json = this.extractJson(body);
+          this.json = json;
+          this.cacheLast = Date.now();
+          this.parser = new Parser(json);
+          resolve();
+          this.isLoading = false;
+        });
+      } else {
+        resolve();
+        this.isLoading = false;
+      }
+    });
+    return this.onLoad;
+  }
+  
+  getAllClasses() {
+    return new Promise(resolve => {
+      this.load().then(() => {
+        resolve(this.parser.getTableRows("classes"));
+      })
+    });
+  }
+  
+  extractJson(value) {
+    let tempStart = value.indexOf("localModCount");
+    let tempSubstr = value.substring(0, tempStart);
+    let start = tempSubstr.lastIndexOf("{");
+    let tempEnd = value.indexOf("ce_ttnum_last", tempStart);
+    tempSubstr = value.substring(tempEnd);
+    let end = tempSubstr.indexOf("}") + 1 + tempEnd;
+    let json = value.substring(start, end);
+    this.object = JSON.parse(json);
+    return this.object;
+  }
+  
+  recache() {
+    return (!this.json || this.cacheLast - Date.now() > 1000 * 60 * 60 * 24 * 5);
   }
   
   getPeriodFromTime(timestamp) {
@@ -53,44 +119,9 @@ module.exports = class TimeTableManager {
     } else if (hours == 15 && minutes >= 5) { // ninth
       return 9;
     }
-    
-    
-  }
-  
-  getCurrentLesson() {
-    let today = Days.today();
-    
-  }
-  
-  load() {
-    return new Promise((resolve, reject) => {
-      if (this.recache()) {
-        request('https://ssnovohradska.edupage.org/timetable/', (error, response, body) => {
-          let json = this.extractJson(body);
-          this.cache.json = json;
-          this.cache.last = Date.now();
-          resolve();
-        });
-      } else {
-        resolve();
-      }
-    });
-  }
-  
-  
-  extractJson(value) {
-    let tempStart = value.indexOf("localModCount");
-    let tempSubstr = value.substring(0, tempStart);
-    let start = tempSubstr.lastIndexOf("{");
-    let tempEnd = value.indexOf("ce_ttnum_last", tempStart);
-    tempSubstr = value.substring(tempEnd);
-    let end = tempSubstr.indexOf("}") + 1 + tempEnd;
-    let json = value.substring(start, end);
-    this.object = JSON.parse(json);
-    return this.object;
-  }
-  
-  recache() {
-    return (!this.cache.json || this.cache.last - Date.now() > 1000 * 60 * 60 * 8);
   }
 }
+
+const gTimeTableManager = new TimeTableManager();
+
+module.exports = gTimeTableManager;

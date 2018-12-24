@@ -4,12 +4,14 @@ const UserDB = require('../database/user.js');
 const Responses = require('../responses/responses.js');
 const WitEntities = require('../wit/entities');
 const TextHandler = require('./text');
+const ContinualResponse = require('./continualResponses.js');
 
 const responses = new Responses();
 
 module.exports = class PostBackHandler {
   constructor(profile, postBack, cache) {
     this.sender_psid = profile.fSender_psid();
+    this.continualResponse = new ContinualResponse(profile, cache, undefined);
     this.profile = profile;
     this.postBack = postBack;
     this.cache = cache;
@@ -94,5 +96,16 @@ module.exports = class PostBackHandler {
     return new Promise(resolve => {
       resolve(new Response("text", "Tak poďme na to. Som uväznený duch Jura Hronca.").next("text", "... `Super vtip, čo?").next("text", "Budem sa ti snažiť spríjemniť život na GJH.").next("generic", responses.whatCanIDo(this.sender_psid)));
     });  
+  }
+  
+  set_class() {
+    return new Promise(resolve => {
+      this.continualResponse.expect("get_class_id");
+      resolve(new Response("text", "Teraz mi napíš triedu, do ktorej chodíš.").next("text", "Napríklad si IB tretiak, tak napíš III.IBDA"));
+    });
+  }
+  
+  get_current_lesson() {
+    return new TextHandler().simulate("current_lesson", new WitEntities().get(), this.profile, this.cache);
   }
 }

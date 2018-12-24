@@ -15,6 +15,7 @@ module.exports = class Parser {
     let table = new Table(classId);
     let lessons = this.getLessonsByClassId(classId);
     lessons.forEach(lesson => {
+      debugger;
       let duration = lesson.durationperiods;
       let teacher = this.getObject("teachers", lesson.teacherids[0]).lastname;
       let subject = this.getObject("subjects", lesson.subjectid).name;
@@ -27,6 +28,7 @@ module.exports = class Parser {
       });
     })
     table.save();
+    return table;
   }
 
   getTableRows(name) {
@@ -44,7 +46,7 @@ module.exports = class Parser {
     let retCards = [];
     for (let i = 0; i < cards.length; ++i) {
       let card = cards[i];
-      if (card.lessonid = id) {
+      if (card.lessonid === id) {
         retCards.push(card);
       }
     }

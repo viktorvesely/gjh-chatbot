@@ -14,7 +14,7 @@ module.exports = {
   sat: 5,
   sun: 6,
   today: () => {
-    let today = new Date.getDay() - 1;
+    let today = new Date().getDay() - 1;
     return today === -1 ? 6 : today;
   }
 }

@@ -1,11 +1,13 @@
 const fs = require('fs');
-const filePath = "./timeTables.json";
+const Days = require('../helpers/days.js');
 
+const filePath = "./timetable/timeTables.json";
 
 module.exports = class TimeTable {
   constructor(classId) {
     this.classId = classId;
-    this.days = [];
+    this.days = this.initDays();
+    
     this.seminarPeriod = {
       start: "14:00",
       end: "15:30"
@@ -78,8 +80,26 @@ module.exports = class TimeTable {
       room: room,
       time: this.getTimeFromPeriod(period, seminar, correctTime)
     }
-    this.days[day][period] = lesson;
-    if (seminar) this.days[day][period + 1] = lesson;
+    if (typeof this.days[day][period] === "undefined") {
+      this.days[day][period] = [];
+    }
+    this.days[day][period].push(lesson);
+    if (seminar) {
+      if (typeof this.days[day][period + 1] === "undefined") {
+        this.days[day][period + 1] = [];
+      }
+      this.days[day][period + 1].push(lesson);
+    }
+  }
+  
+  initDays() {
+    let ret = [];
+    ret[Days.mon] = [];
+    ret[Days.tue] = [];
+    ret[Days.wed] = [];
+    ret[Days.thu] = [];
+    ret[Days.fri] = [];
+    return ret;
   }
   
   export() {
@@ -88,15 +108,21 @@ module.exports = class TimeTable {
     }
   }
   
-  getLesson(day, period) {
+  get(day, period) {
     return this.days[day][period];
   }
   
   getTimeTables() {
     return new Promise(resolve => {
-      fs.readFile(filePath, 'utf8', (err, data) => {
+      fs.readFile(filePath, "utf8" ,(err, data) => {
         if (err) throw err;
-        resolve(JSON.parse(data));
+        let object;
+        try {
+          object = JSON.parse(data);
+        } catch (e) {
+          object = {};
+        }
+        resolve(object);
       });
     });
   }
@@ -104,7 +130,8 @@ module.exports = class TimeTable {
   load() {
     return new Promise(resolve => {
       this.getTimeTables().then(timeTables => {
-        this.days = timeTables[this.classId];
+        
+        this.days = timeTables[this.classId].days;
         resolve();
       });
     });  
@@ -113,8 +140,10 @@ module.exports = class TimeTable {
   save() {
     return new Promise(resolve => {
       this.getTimeTables().then(timeTables => {
+        debugger;
         timeTables[this.classId] = this.export();
-        fs.writeFile(filePath, JSON.stringify(timeTables), err => {
+        let writeData = JSON.stringify(timeTables);
+        fs.writeFile(filePath, writeData, err => {
           if (err) throw err;
           resolve();
         });

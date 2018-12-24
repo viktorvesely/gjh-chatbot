@@ -13,6 +13,12 @@ module.exports = class Response {
     this._hasError = error ? true : false;
   }
   
+  setError(error) {
+    this.error = error;
+    this._hasError = true;
+    return this;
+  }
+  
   hasError() {
     return this._hasError;
   }

@@ -37,7 +37,7 @@ class Profile {
   }
   
   init(sender_psid=null) {
-    this.formatData(sender_psid || this.sender_psid, "", "", -1, false);
+    this.formatData(sender_psid || this.sender_psid, "", "", "", false);
   }
   
   loadProfile(sender_psid=null) {
@@ -73,7 +73,6 @@ class Profile {
   exist() {
     return new Promise((resolve, reject) => {
       var db = this.getDatabase();
-      console.log(this.sender_psid);
       db.get("SELECT * from users WHERE sender_psid=? LIMIT 1", this.sender_psid, (err, row) => {
         if (err) {
           reject(err);
@@ -92,7 +91,7 @@ class Profile {
       let data = Object.values(this.exportData());
       if (exist) {
         data.push(data.splice(0,1)[0]); // switch sender_psid to last position
-        db.run("UPDATE users SET first_name=?, second_name=?, class=?, optOut=? WHERE sender_psid=?", data, err=> {
+        db.run("UPDATE users SET first_name=?, second_name=?, class=? WHERE sender_psid=?", data, err=> {
           if (err) {
             console.error(err);
             onError === null ? null : onError();
@@ -101,7 +100,7 @@ class Profile {
           }
         });
       } else {
-        db.run("INSERT INTO users(sender_psid,first_name,second_name,class,optOut) VALUES(?,?,?,?,?)", data, err => {
+        db.run("INSERT INTO users(sender_psid,first_name,second_name,class) VALUES(?,?,?,?)", data, err => {
           if (err) {
             console.error(err);
             onError === null ? null : onError();
@@ -140,8 +139,7 @@ class Profile {
       sender_psid: this.sender_psid,
       firstName: this.firstName,
       secondName: this.secondName, 
-      classId: this.classId,
-      optOut: this.optOut
+      classId: this.classId
     }
   }
   
@@ -165,8 +163,7 @@ Profile.prototype.Data = {
   sender_psid: "string",
   firstName: "string",
   secondName: "string",
-  classId: "number",
-  optOut: "boolean"
+  classId: "string"
 }
 
 module.exports = Profile;
