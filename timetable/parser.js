@@ -15,7 +15,6 @@ module.exports = class Parser {
     let table = new Table(classId);
     let lessons = this.getLessonsByClassId(classId);
     lessons.forEach(lesson => {
-      debugger;
       let duration = lesson.durationperiods;
       let teacher = this.getObject("teachers", lesson.teacherids[0]).lastname;
       let subject = this.getObject("subjects", lesson.subjectid).name;

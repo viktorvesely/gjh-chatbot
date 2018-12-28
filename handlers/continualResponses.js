@@ -8,6 +8,7 @@ module.exports = class ContinualResponses {
     this.sender_psid = profile.fSender_psid();
     this.cache = cache;
     this.text = text;
+    this.profile = profile;
     this.handlerObject = this.getFromCache();
   }
   

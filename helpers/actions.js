@@ -88,7 +88,7 @@ module.exports = class Actions {
 
   }
 
-  callSendTagAPI(sender_psid, response, tag = "ISSUE_RESOLUTION") {
+  callSendTagAPI(sender_psid, response, tag) {
      let request_body = {
       "recipient": {
         "id": sender_psid
@@ -96,7 +96,7 @@ module.exports = class Actions {
       "message": new Msg(response),
       "tag": tag
     }
-    return this.messageRequest(sender_psid, request_body);
+    return this.messageRequest(sender_psid, request_body, "MESSAGE_TAG");
   }
   
   setStatus(status, sender_psid) {

@@ -38,43 +38,66 @@ function extractFood(arr) {
   });
 }
 
-module.exports = {
-  getDate: (day_offset) => {
-    if (day_offset === undefined) day_offset = 0;
+module.exports = {  
+  getDateObject: (offset) => {
+    // Get offset date
+    if (offset === undefined) offset = 0;
     let today = new Date();
-    var nextDay = new Date();
-    nextDay.setDate(today.getDate() + day_offset);
-    return nextDay.toISOString().split("T")[0]; //format date to YYYY-MM-DD
+    var offsetDate = new Date();
+    offsetDate.setDate(today.getDate() + offset);
+    
+    // Format date to YYYY-MM-DD -- this format is used in the lunch JSON
+    let formattedDate = 
+        `${offsetDate.getFullYear()}-${offsetDate.getMonth()+1}-${offsetDate.getDate()}`; 
+    
+    /*
+    // Get week boundaries (first and last day) based on date
+    let offsetFromMonday = offsetDate.getDay() - 1;
+    offsetFromMonday = offsetFromMonday === - 1 ? 6 : offsetFromMonday; // handle Sunday
+    let weekStartDate = offsetDate.getDate() - offsetFromMonday; // should be Monday
+    let weekEndDate = weekStartDate + 6; // should be Sunday
+    
+    // ERROR prone due to reasons in comments:
+    let from = `${offsetDate.getFullYear()}-${offsetDate.getMonth()}-${weekStartDate}`; // breaks when week is across two months/yrs
+    
+    let until = `${offsetDate.getFullYear()}-${offsetDate.getMonth()}-${weekEndDate}`; // breaks when week is across two months/yrs
+    */
+    
+    // Still wont handle new year
+    let monday = new Date();
+    let day = offsetDate.getDay();
+    let diff = offsetDate.getDate() - day + (day == 0 ? -6:1); // adjust when day is sunday
+    monday.setDate(diff);
+    let from = `${monday.getFullYear()}-${monday.getMonth()+1}-${monday.getDate()}`; 
+    
+    let sunday = new Date();
+    sunday.setDate(monday.getDate() + 6);
+    let until = `${sunday.getFullYear()}-${sunday.getMonth()+1}-${sunday.getDate()}`;
+    
+    console.log(from)
+    console.log(until)
+    
+    // Return values
+    return {
+      date: formattedDate,
+      from: from,
+      until: until
+    }
   },
   
-  getJSON: (date_from, date_until) => {
-    //temp dates
-    // TODO use template strings
-    // pseudo code
-    let now = new Date();
-    let offsetFromMonday = now.getDay() - 1;
-    offsetFromMonday = offsetFromMonday === - 1 ? 6 : offsetFromMonday; // handle Sunday
-    let weekStartDate = now.getDate() - offsetFromMonday; // should be Monday
-    let weekEndDate = weekStartDate + 6; // should be Sunday
-    let new_date_from =  `${now.getFullYear()}-${now.getMonth()}-${weekStartDate}`; // will break when the week lays across two moths (also for year)
-    let new_date_until =  `${now.getFullYear()}-${now.getMonth()}-${weekEndDate}`; // will break when the week lays across two moths (also for year)
-    date_from = "2018-12-10"
-    date_until = "2018-12-16"
-    
-    return new Promise((resolve, reject) => {
+  getJSON: (from, until) => {
+    return new Promise((resolve, reject) => {      
+      // Make request
       let querystring = require('querystring');
-      let temp_form = querystring.stringify({
-        method: 'getUdajeGlobal', 
-        veci: {"setChosenSchoolYearFromDate":{"co":"setChosenSchoolYearFromDate","date": date_until},
-               "alergeny":{"co":"alergeny","plati_od": date_from,"plati_do": date_until},
-               "mobile_getListok":{"co":"mobile_getListok","od": date_from,"do": date_until,"pcVerzia":true}
-              }
-      });
-      
       request({
         url: 'https://ssnovohradska.edupage.org/menu/',
-        form: temp_form
-      }, (err, response, body) => {
+        form: querystring.stringify({
+          method: 'getUdajeGlobal', 
+          veci: {"setChosenSchoolYearFromDate":{"co":"setChosenSchoolYearFromDate", "date": until},
+                 "alergeny":{"co":"alergeny", "plati_od": from, "plati_do": until},
+                 "mobile_getListok":{"co":"mobile_getListok", "od": from, "do": until, "pcVerzia":true}
+          }
+      })}, (err, response, body) => {
         if (!err && response.statusCode == 200) {
           let sub_str = body.substring(
             body.lastIndexOf("var novyListok"), 
@@ -90,53 +113,53 @@ module.exports = {
         } else if (err) {
           reject(err);
         }
-        }
-      );
+      });
     });
   },
   
-  getLunchObject: (day_offset) => {
+  getLunchObject: (offset) => {
     return new Promise((resolve, reject) => {
-      let date = module.exports.getDate(day_offset);
+      let dateObj = module.exports.getDateObject(offset);
+      let date = dateObj.date;
       
-      // method na vytvorenie dolnych 2 boundaries
-      // let date_from, date_until = 
-      module.exports.getJSON()
+      module.exports.getJSON(dateObj.from, dateObj.until)
         .then((data) => {
-          if (data[date].hasOwnProperty('2')) { // if no lunch, data[date] is an empty array
-            let temp = data[date]['2'].nazov
-              .split('\n')
-              .map(line => {
-                return line.replace(/\s+\s/g,' ')
-              })
-            
-            let lunch_obj = {}
-            let idx_A = temp.indexOf('A:');
-            let idx_B = temp.indexOf('B:');
-            let idx_common = temp.indexOf('');
-            
-            if (idx_B !== undefined) { 
-              let arr_A = temp.slice(idx_A + 1, idx_B)
-              let arr_B = temp.slice(idx_B + 1, idx_common)
-              let arr_common = temp.slice(idx_common + 1)
-              lunch_obj.A = {}
-              lunch_obj.B = {}
-              lunch_obj.common = {}
-              Promise.all([extractFood(arr_A), extractFood(arr_B), extractFood(arr_common)])
-                .then((data) => {
-                  data[0].forEach(({key, value}) => lunch_obj.A[key] = value);
-                  data[1].forEach(({key, value}) => lunch_obj.B[key] = value);
-                  data[2].forEach(({key, value}) => lunch_obj.common[key] = value);
+          if (data[date].hasOwnProperty('2')) {
+            if (! data[date]['2'].isCooking) { // Holidays
+              reject('Nic nebude, jedáleň nevarí 😕');
+            } else {
+              let temp = data[dateObj.date]['2'].nazov
+                .split('\n')
+                .map(line => line.replace(/\s+\s/g,' '))
+
+              let lunch_obj = {}
+              let idx_A = temp.indexOf('A:');
+              let idx_B = temp.indexOf('B:');
+              let idx_common = temp.indexOf('');
+
+              if (idx_B !== undefined) { 
+                let arr_A = temp.slice(idx_A + 1, idx_B)
+                let arr_B = temp.slice(idx_B + 1, idx_common)
+                let arr_common = temp.slice(idx_common + 1)
+                lunch_obj.A = {}
+                lunch_obj.B = {}
+                lunch_obj.common = {}
+                Promise.all([extractFood(arr_A), extractFood(arr_B), extractFood(arr_common)])
+                  .then((data) => {
+                    data[0].forEach(({key, value}) => lunch_obj.A[key] = value);
+                    data[1].forEach(({key, value}) => lunch_obj.B[key] = value);
+                    data[2].forEach(({key, value}) => lunch_obj.common[key] = value);
+                  })
+                .then(() => {
+                  lunch_obj.common.soup = temp[0].substring(temp[0].indexOf(' ') + 1).toLowerCase()
+                  resolve(lunch_obj);
                 })
-              .then(() => {
-                lunch_obj.common.soup = temp[0].substring(temp[0].indexOf(' ') + 1).toLowerCase()
-                resolve(lunch_obj);
-              })
-            } else { // If there is only one option (e.g. the week after Christmas holidays)
-              // Q: Extract whole array? What is the structure?
+              } else {
+                // NO 2nd OPTION - CHECK JSON FORMATTING
+              }
             }
-          } else { // If the array is empty (e.g. weekend, during holidays)
-            reject("Jedáleň vtedy nevarí 😕")
+          } else {
+            reject('V školskej jedálni nič, ale môžeš sa tešiť na sladký pondelok 😍')
           }
         })
         .catch((err) => reject(err));

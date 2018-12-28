@@ -131,7 +131,7 @@ module.exports = class TimeTable {
     return new Promise(resolve => {
       this.getTimeTables().then(timeTables => {
         
-        this.days = timeTables[this.classId].days;
+        this.days = typeof timeTables[this.classId] === "undefined" ? undefined : timeTables[this.classId].days;
         resolve();
       });
     });  

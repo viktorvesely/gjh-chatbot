@@ -20,6 +20,7 @@ const PostBackHandler = require('./handlers/postBacks.js');
 const Profile = require('./database/profile.js');
 const Pipeline = require('./database/pipeline.js');
 const ContinualResponse = require('./handlers/continualResponses.js');
+const PipelineHandler = require('./handlers/pipeline.js');
 
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 const WIT_ACCES_TOKEN = process.env.WIT_ACCES_TOKEN;
@@ -56,28 +57,24 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname +  '/views/index.html');
 });
 
-app.post('/allPipes', (req, res) => {
+app.post('/pipes-command', (req, res) => {
   req.session.reload(() => {
-    let pipeline = new Pipeline(req.session.userId);
-    if (pipeline.isOwner()) {
-      pipeline.getAllPipelines().then((pipelines) => {
-        res.send({
-          sucess: true,
-          pipelines: pipelines
-        });
-      },
-                              () => {
-        res.send({
-          success: false,
-          msg: "There was some error in sql. Check console."
-        });
-      });
-    } else {
-      res.send({
-        success: false,
-        msg: "You lost owner-ship... weird. Check session."
-      });
+    let pipelineHandler = new PipelineHandler(req.body, req.session.userId, actions);
+    if(req.session.userId === undefined) {
+      res.send(pipelineHandler.response("session", {}, "sesssion has expired"));
+      return;
     }
+    pipelineHandler.load().then(() => {
+      pipelineHandler.resolve().then(response => {
+        res.send(response);
+      },
+      response => {
+        res.send(response);
+      })
+    },
+    () => {
+      res.send(pipelineHandler.response("login", {}, "Error while loading your profile"));
+    });
   });
 });
 

@@ -2,9 +2,10 @@ var sql = require('sqlite3').verbose();
 
 class Pipeline {
   constructor(userId) {
-    if (userId === undefined) return this;
     this.user = userId;
     this.flags = "";
+    this.prefix = "";
+    if (userId === undefined) return this;
     this.onLoad = this.load();
   }
   
@@ -12,8 +13,13 @@ class Pipeline {
     return this.onLoad;
   }
   
-  makeFrom(userId, flags) {
+  fPrefix() {
+    return this.prefix;
+  }
+  
+  makeFrom(userId, flags, prefix) {
     this.user = userId;
+    this.prefix = prefix;
     this.flags = flags;
     return this;
   }
@@ -40,6 +46,7 @@ class Pipeline {
     return new Promise((resolve, reject) => {
       if(this.isOwner()) {
         this.flags = "z";
+        this.prefix = "Viktor & Filip";
         resolve();
         return;
       }
@@ -53,6 +60,7 @@ class Pipeline {
             reject();
           } else {
             this.flags = user.flags;
+            this.prefix = user.prefix;
             resolve();
           }
         }
@@ -61,14 +69,14 @@ class Pipeline {
     });
   }
     
-  createPipeline(userId, flags, onCreated=null) {
+  createPipeline(userId, flags, prefix, onCreated=null) {
     if (!this.isOwner()) return;
     var db = this.pipelaneDatabase();
-    db.get("INSERT INTO pipelines(userId,flags) VALUES(?,?)", [userId, flags], (err, changes) => {
+    db.get("INSERT INTO pipelines(userId,flags,prefix) VALUES(?,?,?)", [userId, flags, prefix], (err, changes) => {
       if (err) {
         console.log(err);
       } else {
-        onCreated ? onCreated(new Pipeline().makeFrom(userId, flags)) : null; 
+        onCreated ? onCreated(new Pipeline().makeFrom(userId, flags, prefix)) : null; 
       }
     });
     db.close();
@@ -110,18 +118,44 @@ class Pipeline {
     return this._owner === this.user;
   }
   
+  getReceivers() {
+    return new Promise((resolve, reject) => {
+      if (!this.flags) {
+        reject("Could not load the pipeline's flags");
+        return;
+      }
+      this.getAllProfiles().then(rows => {
+        let recievers = [];
+        rows.forEach(profile => {
+          let sender_psid = profile.sender_psid.toString();
+          switch (this.flags) {
+            case "z":
+              recievers.push(sender_psid);
+              break;
+            case "a":
+              if (!profile.generalOptOut) {
+                recievers.push(sender_psid);
+              }
+              break;
+          }
+        });
+        resolve(recievers);
+      });
+    });
+  }
+  
 }
 
 Pipeline.prototype._owner = process.env.PIPELINE_OWNER;
 Pipeline.prototype._userDatabasePath = "database/.data/profiles.db";
 Pipeline.prototype._pipelineDatabasePath = "database/.data/pipelines.db";
 Pipeline.prototype.pipelaneDatabase = () => {
-    return new sql.Database(this._pipelineDatabasePath, err => {
+    return new sql.Database(Pipeline.prototype._pipelineDatabasePath, err => {
       if (err) console.error(err);
   });
 }
 Pipeline.prototype.userDatabase = () => {
-    return new sql.Database(this._userDatabasePath, err => {
+    return new sql.Database(Pipeline.prototype._userDatabasePath, err => {
       if (err) console.error(err);
     });
   }

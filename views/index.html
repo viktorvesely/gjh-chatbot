@@ -16,7 +16,7 @@
     <div id="app">
       <div class="login-form"> 
         <form method="POST" action="/login" id="loginForm" @submit="login($event)">
-          <input type="text" placeholder="meno" name="userId" v-model="inputText" @input="checkInput" spellcheck="false">
+          <input type="text" placeholder="name" name="userId" v-model="inputText" @input="checkInput" spellcheck="false">
         </form>
       </div>
       <img class="its-me" :style="animation" src="https://cdn.glitch.com/69a8ca3a-18d8-421a-912d-2c0f9593e89d%2Fjur_hronec_transprent.png?1542472300667">

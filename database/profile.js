@@ -4,7 +4,8 @@ class Profile {
   constructor(sender_psid) {
     this.formatData(sender_psid);
     this._changed = false;
-    this.onLoad = this.loadProfile().then(() => {
+    this.onLoad = this.loadProfile();
+    this.onLoad.then(() => {
     }, (error)=> {
       console.error(error);
       console.error("Database error occur see the log above for more details");
@@ -29,11 +30,11 @@ class Profile {
   }
   fClassId(value=null) {
     this._changed = value === null ? this._changed : true;
-    return value === null ? this.classId : (this.classId = value);
+    return value === null ? this.classId.toString() : (this.classId = value);
   }
-  fOptOut(value=null) {
+  fGeneralOptOut(value=null) {
     this._changed = value === null ? this._changed : true;
-    return value === null ? this.optOut : (this.optOut = value);
+    return value === null ? this.generalOptOut !== 0 : (this.generalOptOut = value ? 1 : 0);
   }
   
   init(sender_psid=null) {
@@ -53,7 +54,7 @@ class Profile {
             this.init();
             this.save();
           } else {
-            this.formatData(row.sender_psid, row.first_name, row.second_name, row.class, row.optOut);
+            this.formatData(row.sender_psid, row.first_name, row.second_name, row.class, row.generalOptOut);
           }
           resolve();
         }
@@ -91,7 +92,7 @@ class Profile {
       let data = Object.values(this.exportData());
       if (exist) {
         data.push(data.splice(0,1)[0]); // switch sender_psid to last position
-        db.run("UPDATE users SET first_name=?, second_name=?, class=? WHERE sender_psid=?", data, err=> {
+        db.run("UPDATE users SET first_name=?, second_name=?, class=?, generalOptOut=? WHERE sender_psid=?", data, err=> {
           if (err) {
             console.error(err);
             onError === null ? null : onError();
@@ -100,7 +101,7 @@ class Profile {
           }
         });
       } else {
-        db.run("INSERT INTO users(sender_psid,first_name,second_name,class) VALUES(?,?,?,?)", data, err => {
+        db.run("INSERT INTO users(sender_psid,first_name,second_name,class,generalOptOut) VALUES(?,?,?,?,?)", data, err => {
           if (err) {
             console.error(err);
             onError === null ? null : onError();
@@ -126,12 +127,12 @@ class Profile {
     return true;
   }
   
-  formatData(sender_psid=null, firstName=null, secondName=null, classId=null, optOut=null) {
+  formatData(sender_psid=null, firstName=null, secondName=null, classId=null, generalOptOut=null) {
     this.sender_psid = sender_psid;
     this.firstName = firstName;
     this.secondName = secondName;
     this.classId = classId;
-    this.optOut = optOut;
+    this.generalOptOut = generalOptOut;
   }
   
   exportData() {
@@ -139,7 +140,8 @@ class Profile {
       sender_psid: this.sender_psid,
       firstName: this.firstName,
       secondName: this.secondName, 
-      classId: this.classId
+      classId: this.classId,
+      generalOptOut: this.generalOptOut
     }
   }
   
@@ -163,7 +165,8 @@ Profile.prototype.Data = {
   sender_psid: "string",
   firstName: "string",
   secondName: "string",
-  classId: "string"
+  classId: "string",
+  generalOptOut: "number"
 }
 
 module.exports = Profile;

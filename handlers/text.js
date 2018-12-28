@@ -93,7 +93,7 @@ module.exports = class MessageHandler {
         resolve(new Response("text", "Ešte neviem do akej triedy chodíš. Napíš mi meno triedy.").next("text", "Napríklad ak do 3.C, tak napíš III.C"));
         return;
       }
-      gTimeTableManager.getCurrentLesson("113003").then(lessons => {
+      gTimeTableManager.getCurrentLesson(this.profile.fClassId()).then(lessons => {
         if (lessons) {
           let response;
           lessons.forEach((lesson, i) => {
@@ -365,8 +365,12 @@ module.exports = class MessageHandler {
       
       Lunch.getLunchText(day_offset, getA, getB)
         .then((properties) => {
-          let response = new Response('text', undefined) //ERR
-          properties.forEach((property) => response.next('text', property))
+          console.log(properties)
+          let response = new Response('text', undefined)
+          properties.forEach((property) => {
+            response.next('text', property)
+            console.log("P: " + property)
+          })
           resolve(response)
         })
         .catch((err_msg) => resolve(new Response("text", err_msg)))

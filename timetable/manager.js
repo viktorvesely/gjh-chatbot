@@ -15,7 +15,7 @@ class TimeTableManager {
       let today = Days.today();
       today = 4;
       let period = this.getPeriodFromTime(Date.now());
-      period = 1;
+      period = 2;
       let table = new Table(classId);
       table.load().then(() => {
         if (typeof table.days === "undefined") {
@@ -112,9 +112,9 @@ class TimeTableManager {
       return 7;
     } else if (hours == 14 && minutes < 5) { // during seventh
       return 7;
-    } else if (hours == 14 && minutes >= 5) { // before eightth
+    } else if (hours == 14 && minutes >= 5) { // before eighth
       return 8;
-    } else if (hours == 15 && minutes < 5) { // before eightth
+    } else if (hours == 15 && minutes < 5) { // before eighth
       return 8;
     } else if (hours == 15 && minutes >= 5) { // ninth
       return 9;
