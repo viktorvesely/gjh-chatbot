@@ -6,13 +6,15 @@ const Responses = require('../responses/responses.js');
 const ReminderDB = require('../database/reminders.js');
 const BasicResponses = require('../responses/basic_responses.js');
 const request = require('request');
-const UserDb = require('../database/user.js');
 const Lunch = require('../interface/lunch.js');
 const gTimeTableManager = require('../timetable/manager.js');
 const ContinualResponse = require('./continualResponses.js');
+const Button = require('../templates/button.js');
+const Generic = require('../templates/generic.js')
 
 const reminderI = new ReminderInterface();
 const responses = new Responses();
+const lunchHandler = new Lunch();
 
 module.exports = class MessageHandler {
   constructor (response, profile, cache, originalText) {
@@ -113,7 +115,7 @@ module.exports = class MessageHandler {
     });
   }
   
-  spesific_lesson() {
+  specific_lesson() {
     return this.ret("Angličtina 505");
   }
   
@@ -128,16 +130,16 @@ module.exports = class MessageHandler {
     }
     this.cache.set(this.sender_psid, "reminder", reminder);
     return new Promise(resolve => {
-      resolve(new Response("confirmation", reminderI.makeConfirmationQuestion(reminder), ["button_save_reminder_yes", "button_save_reminder_no"]))
+      resolve(new Response("buttons", reminderI.makeConfirmationQuestion(reminder), new Button("postback" ,"Áno", "button_save_reminder", true).next("postback", "Nie", "button_save_reminder", false)));
     });
   }
   
   reminder_delete() {
     return new Promise((resolve) => {
       let response = new Response(
-        "confirmation",
+        "buttons",
         "Naozaj mám zmazať všetky pripomienky? Jednotlivé pripomienky zmažeš správou Nepíšeme [predmet].",
-        ["button_reminder_delete_yes", "button_reminder_delete_no"]
+        new Button("postback", "Preč s nimi ", "button_reminder_delete", true).next("postback", "Nie", "button_reminder_delete", false)
       );
       resolve(response);
     });
@@ -156,15 +158,13 @@ module.exports = class MessageHandler {
         
   reminder_show() {
     return new Promise((resolve, reject) => {
-      Utils.getGifURL("fake laugh").then((url) => {
-        ReminderDB.findReminderByUser(this.sender_psid, (reminders) => {
-          if (!reminders) {
-            reject(new Response("text", "Nepodarilo sa mi to :(", [], "Could not find reminders by psid"));
-          }
-          else {
-            resolve(new Response("text", reminderI.print(reminders)).next("image", url));
-          }
-        });
+      ReminderDB.findReminderByUser(this.sender_psid, (reminders) => {
+        if (!reminders) {
+          reject(new Response("text", "Nepodarilo sa mi to :(", [], "Could not find reminders by psid"));
+        }
+        else {
+          resolve(new Response("text", reminderI.print(reminders)).next("gif", "fake laugh"));
+        }
       });
     });
   }
@@ -181,18 +181,26 @@ module.exports = class MessageHandler {
   
   save_user() {
     let name = Utils.userNameParser(this.entities, this.originalText);
+    let confirmationName = "";
     if (!name || name.length === 0) {
       return this.ret("Tak tomuto menu fakt nerozumiem.", "Could not parse username (undefined)");
     }
-    else if (name.split(" ").length !== 2) {
-      return this.ret("Super meno, " + name + ", ale poprosím ťa len o presné krstné meno a priezvisko.");
+    let names = name.split(" ");
+    names = names.filter(name => !!name); // in case of empty string
+    console.log(JSON.stringify(names));
+    if (names.length === 1 || names.length === 2) {
+      confirmationName = name;
     }
-    else {
-      this.cache.set(this.sender_psid, "username", name);
-      return new Promise(resolve => {
-        resolve(new Response("confirmation", "Naozaj je '" + name + "' tvoje meno? Prosím, nech je aj s diakritikou.", ["button_right_name_yes", "button_right_name_no"]));
-      });
+    else if (names.length > 2) {
+      confirmationName = names[0] + " " + names[names.length - 1];
     }
+    this.cache.set(this.sender_psid, "username", names);
+    return new Promise(resolve => {
+      resolve(new Response("buttons", "Naozaj je '" + confirmationName + "' tvoje meno?",
+                           new Button("postback", "Správne 👌", "button_right_name", true)
+                           .next("postback", "Nie 🙄", "button_right_name", false)
+                          ));
+    });
   }
   
   show_mood() {
@@ -247,11 +255,11 @@ module.exports = class MessageHandler {
   
   tell_joke() {
     return new Promise(resolve => {
-      Utils.getGifURL('laugh')
-        .then(url => {
-          resolve(new Response("image", url).next("text", BasicResponses.joke()));
-        });
+      
+      let joke = BasicResponses.joke()
+      resolve(new Response("text", joke).next("wait", joke.length * 50).next('gif', 'laugh'));
     });
+    
   }
   
   say_bye() {
@@ -324,9 +332,7 @@ module.exports = class MessageHandler {
         let opinion_obj = BasicResponses.getOpinionOn(value);
         responseText = opinion_obj.text;
         if (opinion_obj.hasOwnProperty('gif_keyword')) {
-          Utils.getGifURL(opinion_obj.gif_keyword).then(url => {
-            resolve(new Response("image", url).next("text", responseText));
-          });
+          resolve(new Response("gif", opinion_obj.gif_keyword).next("text", responseText));
         } else if (opinion_obj.hasOwnProperty('gif_url')) {
           resolve(new Response("image", opinion_obj.gif_url).next("text", responseText));
         } else {
@@ -343,7 +349,6 @@ module.exports = class MessageHandler {
   
   get_lunch() {
     return new Promise((resolve, reject) => {
-      
       // Get date
       let day_offset;
       if (this.entities.hasOwnProperty('time_tomorrow')) {
@@ -363,25 +368,17 @@ module.exports = class MessageHandler {
       let getA = this.entities.hasOwnProperty('lunch_option_1');
       let getB = this.entities.hasOwnProperty('lunch_option_2');
       
-      Lunch.getLunchText(day_offset, getA, getB)
+      lunchHandler.getLunchText(day_offset, getA, getB)
         .then((properties) => {
           console.log(properties)
           let response = new Response('text', undefined)
           properties.forEach((property) => {
             response.next('text', property)
-            console.log("P: " + property)
           })
           resolve(response)
         })
         .catch((err_msg) => resolve(new Response("text", err_msg)))
     });
-    
-    // GIF - temporary solution
-    /*return new Promise(resolve => {
-      Utils.getGifURL("food").then((url) => {
-        resolve(new Response("text", "Jedlo").next("image", url).next("text", "... yummy"));
-      })
-    });*/
   }
   
   e_swim() {

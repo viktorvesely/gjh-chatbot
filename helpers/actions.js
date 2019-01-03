@@ -11,7 +11,7 @@ module.exports = class Actions {
   messageRequest(sender_psid, structure, type="RESPONSE") {
     structure['messaging_type'] = type;
     
-    const qs = 'access_token=' + encodeURIComponent(this.__PAGE_ACCESS_TOKEN); // Here you'll need to add your PAGE TOKEN from Facebook
+    const qs = 'access_token=' + encodeURIComponent(this.__PAGE_ACCESS_TOKEN);
     return fetch('https://graph.facebook.com/v2.6/me/messages?' + qs, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -21,7 +21,7 @@ module.exports = class Actions {
   
   facebookRequest(structure) {
     
-    const qs = 'access_token=' + encodeURIComponent(this.__PAGE_ACCESS_TOKEN); // Here you'll need to add your PAGE TOKEN from Facebook
+    const qs = 'access_token=' + encodeURIComponent(this.__PAGE_ACCESS_TOKEN);
     return fetch('https://graph.facebook.com/v2.6/me/messages?' + qs, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -30,34 +30,15 @@ module.exports = class Actions {
   }
   
   sendButtons(sender_psid, question, buttons) {
-    var btns = [];
-    for (let i = 0; i< buttons.length; ++i) {
-      let button = buttons[i];
-      btns.push({
-        "type": "postback",
-        "title": button.display,
-        "payload": button.value
-      })
+    let payload = {
+      "template_type":"button",
+      "text": question,
+      "buttons": buttons
     }
-    let request_body ={
-      "recipient":{
-        "id": sender_psid
-      },
-      "message":{
-        "attachment":{
-          "type":"template",
-          "payload":{
-            "template_type":"button",
-            "text": question,
-            "buttons": btns
-          }
-        }
-      }
-    }
-    return this.messageRequest(sender_psid, request_body);
+    return this.sendTemplate(sender_psid, payload);
   }
   
-  sendConfirmation(sender_psid, question, payloadYes, payloadNo) {
+  sendTemplate(sender_psid, payload) {
     let request_body ={
       "recipient":{
         "id": sender_psid
@@ -65,27 +46,11 @@ module.exports = class Actions {
       "message":{
         "attachment":{
           "type":"template",
-          "payload":{
-            "template_type":"button",
-            "text": question,
-            "buttons":[
-              {
-                "type": "postback",
-                "title": "Áno",
-                "payload": payloadYes
-              },
-              {
-                "type": "postback",
-                "title": "Nie",
-                "payload": payloadNo
-              }
-            ]
-          }
+          "payload": payload
         }
       }
     }
     return this.messageRequest(sender_psid, request_body);
-
   }
 
   callSendTagAPI(sender_psid, response, tag) {
@@ -101,7 +66,6 @@ module.exports = class Actions {
   
   setStatus(status, sender_psid) {
     let request_body = {
-      "messaging_type": 'RESPONSE',
       "recipient": {
         "id": sender_psid
       },
@@ -112,7 +76,6 @@ module.exports = class Actions {
 
   callSendAPI(sender_psid, response, type='RESPONSE') {
     let request_body = {
-      "messaging_type": type,
       "recipient": {
         "id": sender_psid
       },
@@ -184,14 +147,7 @@ module.exports = class Actions {
         }
       }
     }
-    var attachmentSent = this.messageRequest(sender_psid, request_body, 'UPDATE');
-    return new Promise(resolve => {
-      attachmentSent.then(() => {
-        setTimeout(() => {
-          resolve();
-        }, this.__attachmentResponseOffsetTime * 1000);
-      })
-    })
+    return this.messageRequest(sender_psid, request_body, 'UPDATE');
   }
   
 }

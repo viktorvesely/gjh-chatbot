@@ -37,8 +37,13 @@ class Profile {
     return value === null ? this.generalOptOut !== 0 : (this.generalOptOut = value ? 1 : 0);
   }
   
+  fRole(value=null) {
+    this._changed = value === null ? this._changed : true;
+    return value === null ? this.role : (this.role = value);
+  }
+  
   init(sender_psid=null) {
-    this.formatData(sender_psid || this.sender_psid, "", "", "", false);
+    this.formatData(sender_psid || this.sender_psid, "", "", "", false, "");
   }
   
   loadProfile(sender_psid=null) {
@@ -48,13 +53,14 @@ class Profile {
       
       db.get("SELECT * FROM users WHERE sender_psid=? LIMIT 1", this.sender_psid, (err, row) => {
         if (err) {
-          reject(err);
+          console.error(err);
+          reject();
         } else {
           if (row === undefined) {
             this.init();
             this.save();
           } else {
-            this.formatData(row.sender_psid, row.first_name, row.second_name, row.class, row.generalOptOut);
+            this.formatData(row.sender_psid, row.first_name, row.second_name, row.class, row.generalOptOut, row.role);
           }
           resolve();
         }
@@ -92,7 +98,7 @@ class Profile {
       let data = Object.values(this.exportData());
       if (exist) {
         data.push(data.splice(0,1)[0]); // switch sender_psid to last position
-        db.run("UPDATE users SET first_name=?, second_name=?, class=?, generalOptOut=? WHERE sender_psid=?", data, err=> {
+        db.run("UPDATE users SET first_name=?, second_name=?, class=?, generalOptOut=?, role=? WHERE sender_psid=?", data, err=> {
           if (err) {
             console.error(err);
             onError === null ? null : onError();
@@ -101,7 +107,7 @@ class Profile {
           }
         });
       } else {
-        db.run("INSERT INTO users(sender_psid,first_name,second_name,class,generalOptOut) VALUES(?,?,?,?,?)", data, err => {
+        db.run("INSERT INTO users(sender_psid,first_name,second_name,class,generalOptOut,role) VALUES(?,?,?,?,?,?)", data, err => {
           if (err) {
             console.error(err);
             onError === null ? null : onError();
@@ -127,12 +133,13 @@ class Profile {
     return true;
   }
   
-  formatData(sender_psid=null, firstName=null, secondName=null, classId=null, generalOptOut=null) {
+  formatData(sender_psid=null, firstName=null, secondName=null, classId=null, generalOptOut=null, role=null) {
     this.sender_psid = sender_psid;
     this.firstName = firstName;
     this.secondName = secondName;
     this.classId = classId;
     this.generalOptOut = generalOptOut;
+    this.role = role;
   }
   
   exportData() {
@@ -141,7 +148,8 @@ class Profile {
       firstName: this.firstName,
       secondName: this.secondName, 
       classId: this.classId,
-      generalOptOut: this.generalOptOut
+      generalOptOut: this.generalOptOut,
+      role: this.role
     }
   }
   
@@ -166,7 +174,8 @@ Profile.prototype.Data = {
   firstName: "string",
   secondName: "string",
   classId: "string",
-  generalOptOut: "number"
+  generalOptOut: "number",
+  role: "string"
 }
 
 module.exports = Profile;

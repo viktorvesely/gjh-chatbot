@@ -178,7 +178,10 @@ module.exports = {
     return dayIndex;
   },
   
-  getLunchJSON() {
-    console.log('hi');
+  getSchoolAge() {
+    let date_now = new Date();
+    let date_established = new Date(1959, 9, 1);
+    let diff = (date_now.getTime() - date_established.getTime())/(60 * 60 * 24 * 1000 * 365.25);
+    return Math.round(diff);
   }
 }

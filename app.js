@@ -21,6 +21,7 @@ const Profile = require('./database/profile.js');
 const Pipeline = require('./database/pipeline.js');
 const ContinualResponse = require('./handlers/continualResponses.js');
 const PipelineHandler = require('./handlers/pipeline.js');
+const ResponseHandler = require('./handlers/response.js');
 
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 const WIT_ACCES_TOKEN = process.env.WIT_ACCES_TOKEN;
@@ -156,25 +157,8 @@ function messageAccepted (response, sender_psid) {
     messageRejected(response, sender_psid);
     return;
   }
-  var todos = [];
-  var msgs = response.msgs;
-  for (let i = 0; i < msgs.length; ++i) {
-    let msg = msgs[i];
-    switch(msg.type) {
-      case "text":
-        todos.push(() => { return actions.callSendAPI(sender_psid, msg.value); });
-        break;
-      case "confirmation":
-        todos.push(() => { return actions.sendConfirmation(sender_psid, msg.value, msg.options[0], msg.options[1]); });
-        break;
-      case "image":
-        todos.push(() => { return actions.sendAttachment(sender_psid, msg.type, msg.value); });
-        break;
-      case "generic":
-        todos.push(() => { return actions.facebookRequest(msg.value); });
-        break;
-    }
-  }
+  let responseHandler = new ResponseHandler(response, actions, sender_psid);
+  let todos = responseHandler.getTasks();
   var serieExecutor = new SerieExecutor(todos, () => { serieExecutor = undefined });
 }
 

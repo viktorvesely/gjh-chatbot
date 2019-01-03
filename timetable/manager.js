@@ -2,12 +2,11 @@ const request = require('request');
 const Parser = require('./parser.js');
 const Table = require('./table.js');
 const Days = require('../helpers/days.js');
+const fs = require('fs');
 
 class TimeTableManager {
   constructor() {
-    this.cacheLast = 0;
     this.isLoading = false;
-    this.json = null;
   }
   
   getCurrentLesson(classId) {
@@ -36,6 +35,22 @@ class TimeTableManager {
     }
     this.isLoading = true;
     this.onLoad = new Promise((resolve, reject) => {
+      this.recache().then(json => {
+        this.parser = new Parser(json);
+        resolve();
+        this.isLoading = false;
+      }, () => {
+        request('https://ssnovohradska.edupage.org/timetable/', (error, response, body) => {
+          let json = this.extractJson(body);
+          this.parser = new Parser(json);
+          this.cacheJson(json, ()=> {
+            resolve();
+            this.isLoading = false;
+          });
+        });
+      }).catch(err => {
+        console.error(err);
+      });
       if (this.recache()) {
         request('https://ssnovohradska.edupage.org/timetable/', (error, response, body) => {
           let json = this.extractJson(body);
@@ -73,7 +88,47 @@ class TimeTableManager {
     return this.object;
   }
   
+  
+  getCache() {
+    return new Promise(resolve => {
+      fs.readFile(this.cachePath, "utf8" ,(err, data) => {
+        if (err) throw err;
+        let object;
+        try {
+          object = JSON.parse(data);
+        } catch (e) {
+          object = {};
+        }
+        resolve(object);
+      });
+    });
+  }
+  
+  cacheJson(json, onFinished=null) { 
+    let save = {
+      value: json,
+      timestamp: Date.now()
+    }
+    let writeData = JSON.stringify(save);
+    fs.writeFile(this.cachePath, writeData, err => {
+      if (err) throw err;
+      onFinished ? onFinished() : null;
+    });
+  }
+  
   recache() {
+    return new Promise((resolve, reject) => {
+      this.getCache()
+        .then(cache => {
+        if (Object.keys(cache).length === 0 || new Date().getDate() === 1) {
+         reject();
+        }
+        resolve(cache.value);
+      })
+        .catch(err => {
+        throw err;
+      });
+    });
     return (!this.json || this.cacheLast - Date.now() > 1000 * 60 * 60 * 24 * 5);
   }
   
@@ -121,6 +176,8 @@ class TimeTableManager {
     }
   }
 }
+
+TimeTableManager.prototype.cachePath = "./timetable/.cache/edupage.json";
 
 const gTimeTableManager = new TimeTableManager();
 

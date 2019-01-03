@@ -13,6 +13,24 @@
     <script src="/jquery-3.3.1.js"></script>
   </head>
   <body>
+    <script>
+      window.fbAsyncInit = function() {
+        FB.init({
+          appId            : 'your-app-id',
+          autoLogAppEvents : true,
+          xfbml            : true,
+          version          : 'v3.2'
+        });
+      };
+
+      (function(d, s, id){
+         var js, fjs = d.getElementsByTagName(s)[0];
+         if (d.getElementById(id)) {return;}
+         js = d.createElement(s); js.id = id;
+         js.src = "https://connect.facebook.net/en_US/sdk/xfbml.customerchat.js"; //https://connect.facebook.net/en_US/sdk.js 
+         fjs.parentNode.insertBefore(js, fjs);
+       }(document, 'script', 'facebook-jssdk'));
+    </script>
     <div id="app">
       <div class="login-form"> 
         <form method="POST" action="/login" id="loginForm" @submit="login($event)">
@@ -25,6 +43,26 @@
           {{ output }}
         </span>
       </div>
+    </div>
+    <!-- CHAT BUBBLE -->
+    <!-- Load Facebook SDK for JavaScript -->
+    <div id="fb-root"></div>
+    <script>(function(d, s, id) {
+      var js, fjs = d.getElementsByTagName(s)[0];
+      if (d.getElementById(id)) return;
+      js = d.createElement(s); js.id = id;
+      js.src = 'https://connect.facebook.net/en_US/sdk/xfbml.customerchat.js'; //https://connect.facebook.net/en_US/sdk/xfbml.customerchat.js
+      fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));
+    </script>
+
+    <!-- Your customer chat code -->
+    <div class="fb-customerchat"
+      attribution="setup_tool"
+      page_id="2026473490918349"
+      theme_color="#f6c343"
+      logged_in_greeting="Ahoj, ako môžem pomôcť?"
+      logged_out_greeting="Ahoj, ako môžem pomôcť?">
     </div>
     <script src="/page.js"></script>
   </body>

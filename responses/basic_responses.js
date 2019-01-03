@@ -281,5 +281,20 @@ module.exports = {
   
   botName : () => {
     return Utils.getRandomElement(BotNames);
+  },
+  
+  getInfo: (about) => {
+    let response;
+    
+    switch(about){
+      case 'gjh':
+         //BratMUN, DofE, Debateri, Eschenbach, olympionici, ocenenie za informatiku
+        response = 'GJH je škola, ktorá počas svojej ' + Utils.getSchoolAge() + '-ročnej histórie vybudovala jedinečnú komunitu iniciatívnych študentov a učiteľov, ktorí...';
+        break;
+      case 'hronec':
+        response = 'Legendárny matematik';
+        break;
+    }
+    return response;
   }
 }

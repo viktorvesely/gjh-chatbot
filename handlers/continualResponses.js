@@ -9,7 +9,6 @@ module.exports = class ContinualResponses {
     this.cache = cache;
     this.text = text;
     this.profile = profile;
-    this.handlerObject = this.getFromCache();
   }
   
   cacheObject(handlerName, start) {
@@ -39,6 +38,7 @@ module.exports = class ContinualResponses {
   }
   
   resolve() {
+    this.handlerObject = this.getFromCache();
     if (!this.handlerObject || Date.now() - this.handlerObject.start > 1000 * 60 * 7) {
       return false;
     }
