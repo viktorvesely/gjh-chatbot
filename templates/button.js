@@ -12,11 +12,6 @@ module.exports = class Button {
         break;
       case "url":
         btn = this.constructorUrl(args[1], args[2]);
-        this.btns.push({
-          display: this.display,
-          payload: this.payload,
-          type: "postback"
-        });
         break;
       default:
         throw Error("Invalid Button type. Expected url / postback, got " + type.toString());

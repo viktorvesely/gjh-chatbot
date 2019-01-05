@@ -45,11 +45,10 @@ class ResponseHandler {
           })
           break;
         case "carousel":
-          todos.push(() => { return new Promise(resolve => {
-            this.actions.sendTemplate(this.sender_psid, msg.value._payload()).then(res => res.json())
-                .then(json => console.log(json));
-            resolve();
-          })})
+          todos.push(() => { return this.actions.sendTemplate(this.sender_psid, msg.value._payload()); });
+          break;
+        case "list":
+          todos.push(() => { return this.actions.sendTemplate(this.sender_psid, msg.value._payload()); });
           break;
       }
     }
@@ -63,6 +62,6 @@ class ResponseHandler {
   } 
 }
 
-ResponseHandler.prototype.validTypes = ["text", "image", "generic", "gif", "buttons", "wait", "carousel"];
+ResponseHandler.prototype.validTypes = ["text", "image", "generic", "gif", "buttons", "wait", "carousel", "list"];
 
 module.exports = ResponseHandler;

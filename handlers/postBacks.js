@@ -7,6 +7,8 @@ const TextHandler = require('./text');
 const ContinualResponse = require('./continualResponses.js');
 const Utils = require('../helpers/utils.js');
 const BasicResponses = require('../responses/basic_responses.js');
+const Generic = require('../templates/generic.js');
+const Button = require('../templates/button.js');
 
 const responses = new Responses();
 
@@ -100,7 +102,7 @@ module.exports = class PostBackHandler {
   // Get started and related
   button_get_started() {
     return new Promise(resolve => {
-      resolve(new Response("text", "Som uväznený duch Jura Hronca... Super vtip, že?").next("text", "Budem sa snažiť spríjemniť ti život na GJH a na našej stránke.").next("generic", responses.menu(this.sender_psid)));
+      resolve(new Response("text", "Som uväznený duch Jura Hronca... Super vtip, že?").next("text", "Budem sa snažiť spríjemniť ti život na GJH a na našej stránke.").next("buttons", "Povedz mi o sebe viac.", new Button("postback", "Čo dokážeš", "button_identification"))); //next("generic", responses.menu(this.sender_psid)));
     });  
   }
   
@@ -118,6 +120,34 @@ module.exports = class PostBackHandler {
     });
   }
   
+  button_identification() {
+    return new Promise(resolve => {
+      resolve(new Response("text", "Najprv mi o sebe povedz, kto si?").next("wait", 1000).next('carousel', new Generic()
+              .title("Študent")
+              .subTitle("Študujem na gjh")
+              .buttons(new Button("postback", "Presne tak", "identify_user", "student"))
+              .next()
+              .title("Profesor")
+              .subTitle("Vyučujem na gjh")
+              .buttons(new Button("postback", "Správne", "identify_user", "teacher"))
+              .next()
+              .title("Uchádzač")
+              .subTitle("Rozmýšlam nad gjh")
+              .buttons(new Button("postback", "Áno", "identify_user", "applicant"))
+              .next()
+              .title("Rodič")
+              .subTitle("Mám potomka na gjh")
+              .buttons(new Button("postback", "Je to tak", "identify_user", "parent"))
+             ))
+    });
+  }
+  
+  
+  identify_user(role) {
+    return new Promise(resolve => {
+      resolve(new Response('text', role));
+    });
+  }
   
   // User identification
   button_identify_user() {

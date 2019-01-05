@@ -10,7 +10,8 @@ const Lunch = require('../interface/lunch.js');
 const gTimeTableManager = require('../timetable/manager.js');
 const ContinualResponse = require('./continualResponses.js');
 const Button = require('../templates/button.js');
-const Generic = require('../templates/generic.js')
+const Generic = require('../templates/generic.js');
+const List = require('../templates/list.js');
 
 const reminderI = new ReminderInterface();
 const responses = new Responses();
@@ -255,7 +256,6 @@ module.exports = class MessageHandler {
   
   tell_joke() {
     return new Promise(resolve => {
-      
       let joke = BasicResponses.joke()
       resolve(new Response("text", joke).next("wait", joke.length * 50).next('gif', 'laugh'));
     });
@@ -378,6 +378,26 @@ module.exports = class MessageHandler {
           resolve(response)
         })
         .catch((err_msg) => resolve(new Response("text", err_msg)))
+    });
+  }
+  
+  debug_command() {
+    return new Promise(resolve => {
+      resolve(new Response("list", new List()
+                           .large()
+                           .title("Jurko")
+                           .subTitle("moja foto this is so sad. Alexa, play despacito 99 while i will be dancing on my enemies' corpses.")
+                           .button(new Button("postback", "Ano", "test"))
+                           .image("https://scontent-frt3-1.xx.fbcdn.net/v/t1.0-9/24852651_2035084283390603_1391199646637270888_n.png?_nc_cat=109&_nc_ht=scontent-frt3-1.xx&oh=326c2f6012207ff582e902fdf0d45b06&oe=5CC60F24")
+                           .next()
+                           .title("Jurko2")
+                           .subTitle("moja foto2")
+                           .button(new Button("postback", "nie", "test"))
+                           .image("https://scontent-frt3-1.xx.fbcdn.net/v/t1.0-9/24852651_2035084283390603_1391199646637270888_n.png?_nc_cat=109&_nc_ht=scontent-frt3-1.xx&oh=326c2f6012207ff582e902fdf0d45b06&oe=5CC60F24")
+                           .next()
+                           .title("Jurendo")
+                           .subTitle("tri")
+                          ));
     });
   }
   

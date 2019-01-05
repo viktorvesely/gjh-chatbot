@@ -14,7 +14,7 @@ module.exports = class SerieExecutor {
       this.todos.splice(0, 1);
       this.next();
     }, error => {
-      console.log(error);
+      console.error(error);
     });
   }
   

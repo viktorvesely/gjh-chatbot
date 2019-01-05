@@ -1,7 +1,7 @@
 module.exports = class Generic {
-  constructor(shareable=false, imageRatio="horizontal") {
+  constructor(sharable=false, imageRatio="horizontal") {
     this.imageRatio = imageRatio;
-    this.shareable = shareable.toString();
+    this.sharable = sharable.toString();
     
     this.elements = []
     this.elements.push(this._element());
@@ -22,14 +22,16 @@ module.exports = class Generic {
     return this.elements[this.elements.length - 1];
   }
   
-  next() {
+  _validateLastElement() {
     let current = this._currentElement();
-    if (!current.title) throw Error("GenericTemplate: Unfinished previous template when calling .next(). Missing a title. Call .title() with nonEmpty string.");
-    if (this.length === 10) {
-      console.error("GenericTemplate: Carousel exceded it's maximum length (10). Removing first element");
-      this.elemets.shift();
-      this.length--;
-    }
+    if (!current.title) throw Error("GenericTemplate unfinished_element: Element is missing a title. Call .title() on the Element with nonEmpty string.");
+    if (!current.subTitle && !current.imageUrl) throw Error("GenericTemplate unfinished_element: Element must also have one or both of image_url or subtitle set.");
+    if (current.buttons && current.buttons.get().length > 3) throw Error("GenericTemplate max_button_exceeded. List's elements can have maximum of 3 buttons.");
+  }
+  
+  next() {
+    this._validateLastElement();
+    if (this.length === 10) throw Error("GenericTemplate: Carousel exceded it's maximum length (10)");
     this.elements.push(this._element());
     this.length++;
     return this;
@@ -70,13 +72,13 @@ module.exports = class Generic {
     return this;
   }
   
-  shareable() {
-    this.shareable = "true";
+  sharable() {
+    this.sharable = "true";
     return this;
   }
   
-  nonshareable() {
-    this.shareable = "false";
+  nonsharable() {
+    this.sharable = "false";
     return this;
   }
   
@@ -91,6 +93,7 @@ module.exports = class Generic {
   }
   
   _payload() {
+  this._validateLastElement();
     let elements = []
     
     this.elements.forEach(e => {
@@ -103,15 +106,13 @@ module.exports = class Generic {
       e.buttons ? element.buttons = e.buttons.get() : false;
       elements.push(element);
     });
-  
     
     let payload  = {
       "template_type":"generic",
       "elements": elements,
-      "sharable": this.shareable,
+      "sharable": this.sharable,
       "image_aspect_ratio": this.imageRatio
     }
-    console.log(JSON.stringify(payload));
     return payload;
   }
 }
