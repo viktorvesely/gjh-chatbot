@@ -2,6 +2,7 @@ module.exports = class Generic {
   constructor(sharable=false, imageRatio="horizontal") {
     this.imageRatio = imageRatio;
     this.sharable = sharable.toString();
+    this._customPayload = false;
     
     this.elements = []
     this.elements.push(this._element());
@@ -88,12 +89,18 @@ module.exports = class Generic {
   }
   
   setSquareRatio() {
-    this.imageRatio = "square"
+    this.imageRatio = "square";
+    return this;
+  }
+  
+  _fromPayload(payload) {
+    this._customPayload = payload; 
     return this;
   }
   
   _payload() {
-  this._validateLastElement();
+    if (this._customPayload) return this._customPayload;
+    this._validateLastElement();
     let elements = []
     
     this.elements.forEach(e => {

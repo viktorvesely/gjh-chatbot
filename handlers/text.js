@@ -12,12 +12,15 @@ const ContinualResponse = require('./continualResponses.js');
 const Button = require('../templates/button.js');
 const Generic = require('../templates/generic.js');
 const List = require('../templates/list.js');
+const OfficeManager = require('../office/manager.js');
+const Dates = require('../helpers/dates.js')
+const Constants = require('../helpers/constants.js')
 
 const reminderI = new ReminderInterface();
 const responses = new Responses();
 const lunchHandler = new Lunch();
 
-module.exports = class MessageHandler {
+class MessageHandler {
   constructor (response, profile, cache, originalText) {
     if (typeof response === "undefined") {
       return this;
@@ -56,7 +59,7 @@ module.exports = class MessageHandler {
   }
   
   dontKnow() {
-    return BasicResponses.doesNotUnderstandMessage();;
+    return BasicResponses.doesNotUnderstandMessage();
   }
   
   partiallyDontKnow(entities) {
@@ -71,7 +74,7 @@ module.exports = class MessageHandler {
         }
       }
       if (maxName === "intent") {
-        resolve(new Response("text","Trochu chápem, čo sa mi snažíš povedať ale asi nie formáciu vety.").next("text", "Skús to trochu inak."));
+        resolve(new Response("text","Trochu chápem, čo sa mi snažíš povedať, ale asi to nie je formáciu vety").next("text", "Skús to trochu inak 😅"));
         return;
       }
       resolve(new Response("text", "Uhm, nerozumiem, čo si tým myslel. Rozumiem, ale slovíčku \"" + entities[maxName][0]["value"] + "\".").next("text", "Skús ho použiť v inom kontexte."));
@@ -89,14 +92,64 @@ module.exports = class MessageHandler {
     })
   }
   
+  static __internal_error_response() {
+    return new Response("text", "Internal server error has occured while trying to resolve your request").next("text", "Tough luck pre teba (pls skontaktuj môjho developera)");
+  }
+  
+  debug_command() {
+    return new Promise((resolve, reject) => {
+      gTimeTableManager.getCurrentLesson(this.profile.fClassId(), 1).then(lessons => {
+        if (lessons) {
+          let response;
+          lessons.forEach((lesson, i) => {
+            if (i === 0) {
+              response = new Response("text", `${lesson.subject} v ${lesson.room} s ${lesson.teacher}`);
+            } else {
+              response.next("text", `${lesson.subject} v ${lesson.room} s ${lesson.teacher}`);
+            }
+          });
+          resolve(response);
+        } else {
+          resolve(new Response("text", "Nemáš žiadnu. To je ale slasti!"))
+        }
+      }).catch(e => {
+        reject(new Response("text", "Nedokážem načítať tvoje hodiny :(").setError(e));
+      });
+    });
+  }
+  
   current_lesson() {
     return new Promise((resolve, reject) => {
-      if (!this.profile.fClassId()) {
-        this.continualResponse.expect("get_class_id");
-        resolve(new Response("text", "Ešte neviem do akej triedy chodíš. Napíš mi meno triedy.").next("text", "Napríklad ak do 3.C, tak napíš III.C"));
+      if (!this.profile.fRole()) {
+        resolve("buttons", "Neviem, či si učiteľ alebo študent 🤔", new Button("postback", "Nastaviť, kto som 💪", "button_user_identification"));
         return;
       }
-      gTimeTableManager.getCurrentLesson(this.profile.fClassId()).then(lessons => {
+      switch (this.profile.fRole()) {
+        case "student":
+          if (!this.profile.fClassId()) {
+            this.continualResponse.expect("get_class_id");
+            resolve(new Response("text", "Ešte neviem, do akej triedy chodíš. Napíš mi meno triedy.").next("text", "Napríklad ak do 3.C, tak napíš III.C"));
+            return;
+          }
+          break;
+        case "teacher":
+          if (!this.profile.fFirstName() || !this.profile.fSecondName()) {
+            this.continualResponse.expect("set_name");
+            resolve(new Response("text", "Neviem, kto si. Potrebujem od teba tvoje krstné meno A priezvisko. Tak mi ho sem prosím napíš")
+                    .next("text", "Ak nemáš záujem, tak napíš \"zruš\""));
+          }
+          break;
+        case "parent":
+          if (!this.profile.fClassId()) {
+            this.continualResponse.expect("get_class_id");
+            resolve(new Response("text", "Ešte neviem, do akej triedy chodí tvoje dieťa. Napíš mi meno jeho/jej triedy.").next("text", "Napríklad ak do 2.C, tak napíš II.C"));
+            return;
+          }
+          break;
+        case "applicant":
+          break;
+      }
+      gTimeTableManager.getCurrentLesson(this.profile.fClassId(), this.entities.delta[0].value).then(lessons => {
         if (lessons) {
           let response;
           lessons.forEach((lesson, i) => {
@@ -118,10 +171,6 @@ module.exports = class MessageHandler {
   
   specific_lesson() {
     return this.ret("Angličtina 505");
-  }
-  
-  teacher_cabinet() {
-    return this.ret("815");
   }
   
   reminder_time() {
@@ -181,6 +230,14 @@ module.exports = class MessageHandler {
   }
   
   save_user() {
+    if (this.entities.hasOwnProperty("s_first_name")) {
+      return new Promise(resolve => {
+      resolve(new Response("buttons", "'" + confirmationName + "', je to správne?",
+                           new Button("postback", "Správne 👌", "button_right_name", true)
+                           .next("postback", "Nie 🙄", "button_right_name", false)
+                          ));
+      });
+    }
     let name = Utils.userNameParser(this.entities, this.originalText);
     let confirmationName = "";
     if (!name || name.length === 0) {
@@ -188,7 +245,6 @@ module.exports = class MessageHandler {
     }
     let names = name.split(" ");
     names = names.filter(name => !!name); // in case of empty string
-    console.log(JSON.stringify(names));
     if (names.length === 1 || names.length === 2) {
       confirmationName = name;
     }
@@ -259,7 +315,6 @@ module.exports = class MessageHandler {
       let joke = BasicResponses.joke()
       resolve(new Response("text", joke).next("wait", joke.length * 50).next('gif', 'laugh'));
     });
-    
   }
   
   say_bye() {
@@ -345,59 +400,16 @@ module.exports = class MessageHandler {
     });
   }
   
-  
-  
   get_lunch() {
     return new Promise((resolve, reject) => {
-      // Get date
-      let day_offset;
-      if (this.entities.hasOwnProperty('time_tomorrow')) {
-        console.log('tomorrow\'s lunch');
-        day_offset = 1;
-      } else if (this.entities.hasOwnProperty('time_day_after_tomorrow')) {
-        console.log('day after tomorrow\'s lunch');
-        day_offset = 2;
-      } else if (this.entities.hasOwnProperty('time_day')) {
-        console.log('lunch for ' + this.entities.time_day);
-        day_offset = Utils.dayOffset(this.entities.time_day[0].value, 
-                                 ["pondelok", "utorok", "streda", "stvrtok", "piatok", "sobota", "nedela"])
-      } else {
-        console.log('today\'s lunch');
-      }
-      
-      let getA = this.entities.hasOwnProperty('lunch_option_1');
-      let getB = this.entities.hasOwnProperty('lunch_option_2');
-      
-      lunchHandler.getLunchText(day_offset, getA, getB)
-        .then((properties) => {
-          console.log(properties)
-          let response = new Response('text', undefined)
-          properties.forEach((property) => {
-            response.next('text', property)
-          })
-          resolve(response)
-        })
-        .catch((err_msg) => resolve(new Response("text", err_msg)))
-    });
-  }
-  
-  debug_command() {
-    return new Promise(resolve => {
-      resolve(new Response("list", new List()
-                           .large()
-                           .title("Jurko")
-                           .subTitle("moja foto this is so sad. Alexa, play despacito 99 while i will be dancing on my enemies' corpses.")
-                           .button(new Button("postback", "Ano", "test"))
-                           .image("https://scontent-frt3-1.xx.fbcdn.net/v/t1.0-9/24852651_2035084283390603_1391199646637270888_n.png?_nc_cat=109&_nc_ht=scontent-frt3-1.xx&oh=326c2f6012207ff582e902fdf0d45b06&oe=5CC60F24")
-                           .next()
-                           .title("Jurko2")
-                           .subTitle("moja foto2")
-                           .button(new Button("postback", "nie", "test"))
-                           .image("https://scontent-frt3-1.xx.fbcdn.net/v/t1.0-9/24852651_2035084283390603_1391199646637270888_n.png?_nc_cat=109&_nc_ht=scontent-frt3-1.xx&oh=326c2f6012207ff582e902fdf0d45b06&oe=5CC60F24")
-                           .next()
-                           .title("Jurendo")
-                           .subTitle("tri")
-                          ));
+      var offset = Dates.getLunchDayOffset(this.entities)
+      var getA = this.entities.hasOwnProperty('lunch_option_1')
+      var getB = this.entities.hasOwnProperty('lunch_option_2')
+      lunchHandler.getLunchText(offset, getA, getB).then((properties) => {
+          var response = new Response('text', undefined);
+          properties.forEach((property) => response.next('text', property));
+          resolve(response);
+        }).catch((err_msg) => resolve(new Response("text", err_msg)));
     });
   }
   
@@ -445,5 +457,89 @@ module.exports = class MessageHandler {
     }); 
   }
   
+  get_office_directions() {
+    let teacherEntity = this.entities["gjh_teacher"]
+    let teacherName = teacherEntity ? teacherEntity[0]["value"] : null
+    
+    if (teacherName) {
+      return OfficeManager.getOfficeDirections(teacherName)
+    }
+    return new Promise(resolve => {
+      this.continualResponse.expect("get_office_directions_from_teachername");
+      resolve(new Response("text", "Napíš, prosím, meno pedagóga, ktorého hľadáš 👩🏼‍🏫👨🏻‍🏫"));
+    });  
+  }
+  
+  request_travelmode() {
+    return new Promise(resolve => {
+      resolve(new Response('buttons', 'Ako prídeš?', new Button('url','MHD 🚌', Constants.url.maps.schoolDirections + '&travelmode=transit').next('postback','Bikom 🚲','get_directions_to_school:bicycle').next('postback','Autom  🚘','get_directions_to_school:car')))
+    });
+  }
+
+  get_parking_options() {
+    return new Promise(resolve => {
+      resolve(new Response('buttons', 'Zaparkovať môžeš na mini parkovisku školy:', new Button('url', 'Mini parkovisko 📌', Constants.url.maps.parkingLot)).next('text', 'Počítaj však s tým, že počas rodička býva plné 😕').next('text', 'Vtedy je najlepšie zaparkovať v okolitých uličkách'))
+    });
+  }
+  
+  why_informal() {
+    return new Promise(resolve => {
+      resolve(new Response('text', `Ja už mám ${Utils.getYearsFrom(Constants.date.jurHronecBirthdate)} rokov... snáď ma nechceš naprávať`).next('text', '😄😉'))
+    })
+  }
+  
+  tell_age() {
+    return new Promise(resolve => {
+      resolve(new Response('text', `${Utils.getYearsFrom(Constants.date.jurHronecBirthdate)} rokov... už mi lásko není dvacet let 🙁`))
+    })
+  }
+  
+  accept_praise() {
+    return this.ret(BasicResponses.acceptPraise());
+  }
+  
+  get_classroom() {
+    return new Promise(resolve => {
+      this.continualResponse.expect("get_classroom_directions_from_teachername")
+      resolve(new Response('text', 'Napíš, prosím, meno triedneho 👨🏻‍🏫/triednej 👩🏼‍🏫'))
+    });
+  }
+  
+  get_classroom_number() {
+    return new Promise(resolve => {
+      this.continualResponse.expect("get_classroom_number")
+      resolve(new Response('text', 'Napíš, prosím, číslo triedy:'))
+    });
+  }
+  
+  request_test_subject() {
+    return new Promise(resolve => {
+      resolve(new Response('buttons', 'Ktorý predmet ťa zaujíma?', 
+                           new Button('url', 'Matematika 🔢', Constants.url.test.maths)
+                           .next('url', 'Slovenčina 🇸🇰', Constants.url.test.slovak)
+                          ))
+    })
+  }
+  
+  pay_lunch() {
+    return new Promise(resolve => {
+      resolve(new Response('text', '1️⃣ V EduPagi v sekcii "Platby" nájdeš sumu na zaplatenie, IBAN a variabilný symbol')
+              .next('text', '2️⃣ Konštantný symbol je 0308')
+              .next('buttons', '3️⃣ Do poznámky nezabudni uviesť meno a triedu stravníka 😉', 
+                    new Button('url', 'Poďme na to 👩🏽‍💼', Constants.url.eduPageLogin)
+                    .next('url', 'Viac o obedoch 🔎', Constants.url.moreAboutLunches))
+              .next('buttons', '... inak v EduPage appke všetko zaplatíš jednoducho cez VIAMO 📱', 
+                    new Button('url', 'iOS', Constants.url.eduPageAppLink.iOS)
+                    .next('url', 'Android', Constants.url.eduPageAppLink.Android))
+             )
+    })
+  }
+  
+  contribute() {
+    return new Promise(resolve => {
+      resolve(new Response('buttons', 'Akou formou by si chcel(a) prispieť? 🤔', new Button('url', 'Prevodom 🏦', Constants.url.nadaciaNovohradskaAnyContribution).next('url', '2% z daní 👩🏽‍💼', Constants.url.nadaciaNovohradskaTwoPercent)))
+    })
+  }
 };
 
+module.exports = MessageHandler;

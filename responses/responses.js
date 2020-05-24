@@ -25,7 +25,7 @@ module.exports = class Responses {
           "type":"template",
           "payload":{
             "template_type":"button",
-            "text": "Pár vhodných vecí na začiatok: ",
+            "text": "Budem ťa sprevádzať životom na GJH alebo školským webom",
             "buttons":[
               {
                 "type": "postback",
@@ -40,7 +40,7 @@ module.exports = class Responses {
               {
                 "type": "postback",
                 "title": "Čo dokážeš?",
-                "payload": "button_identify_user"
+                "payload": "button_user_identification"
               }
             ]
           }
@@ -48,7 +48,7 @@ module.exports = class Responses {
       }
     }
   }
-  
+  /*
   userTypes(identifier, sender_psid) {
     let text, button1, button2, payload1, payload2;
     
@@ -103,7 +103,7 @@ module.exports = class Responses {
       }
     }
   }
-  
+  */
   mainFunctions(sender_psid) {
     return {
       "recipient":{

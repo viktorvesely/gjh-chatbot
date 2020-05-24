@@ -9,12 +9,11 @@ class TimeTableManager {
     this.isLoading = false;
   }
   
-  getCurrentLesson(classId) {
+  getCurrentLesson(classId, delta=0) {
     return new Promise(resolve => {
       let today = Days.today();
-      today = 4;
       let period = this.getPeriodFromTime(Date.now());
-      period = 2;
+      period += delta;
       let table = new Table(classId);
       table.load().then(() => {
         if (typeof table.days === "undefined") {
@@ -136,11 +135,19 @@ class TimeTableManager {
     let date = typeof timestamp === "object" && timestamp.constructor.name === "Date" ? timestamp : new Date(timestamp);
     let hours = date.getHours();
     let minutes = date.getMinutes();
+    let day = date.getDate();
+    let month = date.getMonth() + 1;
+    if ((month === 10 && day >= 27) || month > 10) {
+      hours++;
+    } else {
+      hours += 2;
+    }
+    console.log(hours);
     if (hours < 8) { // before first
       return 1; 
     } else if (hours >= 16) { // after last
       return 10;
-    }    
+    }
     else if (hours === 8 && minutes < 35) { // during first
       return 1;
     } else if (hours === 8 && minutes >= 35) { // before second

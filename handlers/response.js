@@ -7,7 +7,7 @@ class ResponseHandler {
     this.sender_psid = sender_psid;
   }
   
-  getTasks() {
+  getTasks(tag="") {
     var todos = [];
     var msgs = this.response.msgs;
     for (let i = 0; i < msgs.length; ++i) {
@@ -15,7 +15,7 @@ class ResponseHandler {
       this.validateType(msg.type);
       switch(msg.type) {
         case "text":
-          todos.push(() => { return this.actions.callSendAPI(this.sender_psid, msg.value); });
+          todos.push(() => { return this.actions.callSendAPI(this.sender_psid, msg.value, tag); });
           break;
         case "buttons":
           todos.push(() => { return this.actions.sendButtons(this.sender_psid, msg.value, msg.options.get()); });
@@ -41,14 +41,14 @@ class ResponseHandler {
               setTimeout(() => {
                 resolve()
               }, msg.value);             
-            }) 
+            })
           })
           break;
         case "carousel":
-          todos.push(() => { return this.actions.sendTemplate(this.sender_psid, msg.value._payload()); });
+          todos.push(() => { return this.actions.sendTemplate(this.sender_psid, msg.value._payload(), tag); });
           break;
         case "list":
-          todos.push(() => { return this.actions.sendTemplate(this.sender_psid, msg.value._payload()); });
+          todos.push(() => { return this.actions.sendTemplate(this.sender_psid, msg.value._payload(), tag); });
           break;
       }
     }

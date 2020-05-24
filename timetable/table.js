@@ -127,6 +127,7 @@ module.exports = class TimeTable {
     });
   }
   
+  
   load() {
     return new Promise(resolve => {
       this.getTimeTables().then(timeTables => {
@@ -140,7 +141,6 @@ module.exports = class TimeTable {
   save() {
     return new Promise(resolve => {
       this.getTimeTables().then(timeTables => {
-        debugger;
         timeTables[this.classId] = this.export();
         let writeData = JSON.stringify(timeTables);
         fs.writeFile(filePath, writeData, err => {

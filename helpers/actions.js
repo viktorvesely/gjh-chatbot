@@ -38,7 +38,7 @@ module.exports = class Actions {
     return this.sendTemplate(sender_psid, payload);
   }
   
-  sendTemplate(sender_psid, payload) {
+  sendTemplate(sender_psid, payload, tag="") {
     let request_body ={
       "recipient":{
         "id": sender_psid
@@ -50,7 +50,11 @@ module.exports = class Actions {
         }
       }
     }
-    return this.messageRequest(sender_psid, request_body);
+    if (tag) {
+      request_body.messaging_type = "MESSAGE_TAG";
+      request_body.tag = tag;
+    }
+    return this.messageRequest(sender_psid, request_body, tag ? "MESSAGE_TAG" : undefined);
   }
 
   callSendTagAPI(sender_psid, response, tag) {
@@ -74,62 +78,18 @@ module.exports = class Actions {
     return this.messageRequest(sender_psid, request_body); 
   }
 
-  callSendAPI(sender_psid, response, type='RESPONSE') {
+  callSendAPI(sender_psid, response, tag) {
     let request_body = {
       "recipient": {
         "id": sender_psid
       },
       "message": new Msg(response) 
     }
-    return this.messageRequest(sender_psid, request_body, type);
-  }
-  
-  setGreetingMsg() {
-    let request_body_first = {"get_started": {"payload": "button_get_started"}};
-    let request_body_second = {"greeting":[
-      {
-        "locale": "default",
-        "text": "Posťažuj sa o študentskom živote, na komplikované veci zo zásady neodpisujem",
-      }
-    ]};
-    this.setPersistentMenu();
-    this.facebookRequest(request_body_first);
-    this.facebookRequest(request_body_second);
-  }
-  
-  setPersistentMenu() {
-    let request_body = {
-      "persistent_menu":[
-        {
-          "locale":"default",
-          "composer_input_disabled": false,
-          "call_to_actions":[
-            {
-              "title":"Zistiť obed",
-              "type":"nested",
-              "call_to_actions":[
-                {
-                  "title":"A-čko a B-čko",
-                  "type":"postback",
-                  "payload":"button_lunch"
-                },
-                {
-                  "title":"A-čko",
-                  "type":"postback",
-                  "payload":"button_lunch_A"
-                },
-                {
-                  "title":"B-čko",
-                  "type":"postback",
-                  "payload":"button_lunch_B"
-                }
-              ]
-            }
-          ]
-        }
-      ]
+    if (tag) {
+      request_body.messaging_type = "MESSAGE_TAG";
+      request_body.tag = tag;
     }
-    this.facebookRequest(request_body);
+    return this.messageRequest(sender_psid, request_body, tag ? "MESSAGE_TAG" : undefined);
   }
   
   sendAttachment(sender_psid, type, url) {

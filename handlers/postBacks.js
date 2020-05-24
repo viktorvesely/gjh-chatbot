@@ -2,13 +2,16 @@ const Response = require('../responses/responseObject.js');
 const ReminderDB = require('../database/reminders.js');
 const UserDB = require('../database/user.js');
 const Responses = require('../responses/responses.js');
-const WitEntities = require('../wit/entities');
-const TextHandler = require('./text');
+const WitEntities = require('../wit/entities.js');
+const TextHandler = require('./text.js');
 const ContinualResponse = require('./continualResponses.js');
 const Utils = require('../helpers/utils.js');
 const BasicResponses = require('../responses/basic_responses.js');
 const Generic = require('../templates/generic.js');
 const Button = require('../templates/button.js');
+const OfficeDirections = require('../office/directions.js');
+const ClassroomDirections = require('../classroom/directions.js')
+const Constants = require('../helpers/constants.js')
 
 const responses = new Responses();
 
@@ -21,6 +24,7 @@ module.exports = class PostBackHandler {
     let builder = postBack.split(":");
     this.handler = builder.shift();
     this.args = builder;
+
     this.cache = cache;
   }
   
@@ -84,31 +88,15 @@ module.exports = class PostBackHandler {
     }
   }
   
-  button_lunch() {    
-    let entities = new WitEntities().get(); // no entities are required for this handler
-    return new TextHandler().simulate("get_lunch", entities, this.profile, this.cache);
-  }
-   
-  button_lunch_A() {
-    let entities = new WitEntities("lunch_option_1", "acko").get(); // use function next for next entity
-    return new TextHandler().simulate("get_lunch", entities, this.profile, this.cache);
-  } 
-  
-  button_lunch_B() {
-    let entities = new WitEntities("lunch_option_2", "bcko").get();
-    return new TextHandler().simulate("get_lunch", entities, this.profile, this.cache);
-  }
-  
   // Get started and related
   button_get_started() {
+    //TEST
     return new Promise(resolve => {
-      resolve(new Response("text", "Som uväznený duch Jura Hronca... Super vtip, že?").next("text", "Budem sa snažiť spríjemniť ti život na GJH a na našej stránke.").next("buttons", "Povedz mi o sebe viac.", new Button("postback", "Čo dokážeš", "button_identification"))); //next("generic", responses.menu(this.sender_psid)));
-    });  
+      resolve(new Response("text", "Som uväznený duch Jura Hronca... zasmej sa, nech mi nie je trápne 😅").next("generic", responses.menu(this.sender_psid)));
+    });
   }
   
-  //CONTENT IS TEMPORARY
   button_about_gjh() {
-    // INFO ABOUT STUDENTS' ACHIEVEMENTS, NOTABLE SCHOOL EVENTS, ..., NOTABLE ALUMNI
     return new Promise(resolve => {
       resolve(new Response('text', BasicResponses.getInfo('gjh')));
     });
@@ -120,76 +108,83 @@ module.exports = class PostBackHandler {
     });
   }
   
-  button_identification() {
+  button_user_identification() {
     return new Promise(resolve => {
-      resolve(new Response("text", "Najprv mi o sebe povedz, kto si?").next("wait", 1000).next('carousel', new Generic()
-              .title("Študent")
-              .subTitle("Študujem na gjh")
-              .buttons(new Button("postback", "Presne tak", "identify_user", "student"))
-              .next()
-              .title("Profesor")
-              .subTitle("Vyučujem na gjh")
-              .buttons(new Button("postback", "Správne", "identify_user", "teacher"))
-              .next()
-              .title("Uchádzač")
-              .subTitle("Rozmýšlam nad gjh")
-              .buttons(new Button("postback", "Áno", "identify_user", "applicant"))
-              .next()
-              .title("Rodič")
-              .subTitle("Mám potomka na gjh")
-              .buttons(new Button("postback", "Je to tak", "identify_user", "parent"))
-             ))
+      resolve(new Response("text", "Najprv mi prezraď, kto si 🧐").next("wait", 500).next('carousel', new Generic()
+        .title("Študent 👨‍🎓")
+          .subTitle("Chodím na GJH")
+          .buttons(new Button("postback", "Presne tak", "identify_user", "student"))
+          .image("https://cdn.glitch.com/69a8ca3a-18d8-421a-912d-2c0f9593e89d%2FJurko_student_v2.png?1546809653391")
+          .setSquareRatio()
+        .next()
+          .title("Profesor 👩‍🏫")
+          .subTitle("Učím na GJH")
+          .buttons(new Button("postback", "Správne", "identify_user", "teacher"))
+          .image("https://cdn.glitch.com/69a8ca3a-18d8-421a-912d-2c0f9593e89d%2FJurko_teacher_v2.png?1546809653644")
+          .setSquareRatio()
+        .next()
+          .title("Uchádzač 🤩")
+          .subTitle("Premýšľam nad GJH")
+          .buttons(new Button("postback", "To som ja", "identify_user", "applicant"))
+          .image("https://cdn.glitch.com/69a8ca3a-18d8-421a-912d-2c0f9593e89d%2FJurko_kid_v2.png?1546809653351")
+          .setSquareRatio()
+        .next()
+          .title("Rodič 👩‍👦")
+          .subTitle("Mám potomka na GJH")
+          .buttons(new Button("postback", "Je to tak", "identify_user", "parent"))
+          .image("https://cdn.glitch.com/69a8ca3a-18d8-421a-912d-2c0f9593e89d%2FJurko_parent_v2.png?1546809653566")
+          .setSquareRatio()
+       ))
     });
   }
   
   
   identify_user(role) {
     return new Promise(resolve => {
-      resolve(new Response('text', role));
-    });
-  }
-  
-  // User identification
-  button_identify_user() {
-    return new Promise(resolve => {
-      resolve(new Response('generic', responses.userTypes('general', this.sender_psid)));
-    });
-  }
-  
-  button_identify_gjh() {
-    return new Promise(resolve => {
-      resolve(new Response('generic', responses.userTypes('gjh', this.sender_psid)));
-    });
-  }
-  
-  button_identify_stranger() {
-    return new Promise(resolve => {
-      resolve(new Response('generic', responses.userTypes('stranger', this.sender_psid)));
-    });
-  }
-  
-  // Modify content based on user
-  button_user_teacher() {
-    return new Promise(resolve => {
-      resolve(new Response('text', 'teacher'));
-    });
-  }
-  
-  button_user_student() {
-    return new Promise(resolve => {
-      resolve(new Response('text', 'student'));
-    });
-  }
-  
-  button_user_parent() {
-    return new Promise(resolve => {
-      resolve(new Response('text', 'parent'));
-    });
-  }
-  
-  button_user_applicant() {
-    return new Promise(resolve => {
-      resolve(new Response('text', 'applicant'));
+      switch (role) {
+        case 'student':
+          resolve(new Response('text', 'Ahoj, GJHák! 😁')
+                  .next('text', 'Tu je zopár vecí, s ktorými ti rád pomôžem:')
+                  .next('buttons', 'Zisti, čo dnes vypekajú:', new Button('postback', 'Menučko na dnes 🥣', 'get_lunch:today')
+                       .next('postback', 'Zaplať obedy 🍝', 'pay_lunch'))
+                  .next('buttons', 'Už nikdy nezabudni, kde máš hodinu:', new Button('postback', 'Nastaviť triedu 📚', 'set_class'))
+                  .next('buttons', 'Ak práve začínaš na GJH, možno hľadáš:', new Button('postback', 'Triedu 📐🌎🖋', 'get_classroom_number')
+                                                               .next('postback', 'Kabinet 👩‍🏫', 'get_office_directions'))
+                  .next('text', 'Dokážem toho však oveľa viac 🙌')
+                 )
+          break;
+        case 'teacher':
+          resolve(new Response('text', 'Dobrý deň, kolega! 😉')
+                  .next('text', 'Tu je zopár vecí, s ktorými ti rád pomôžem:')
+                  .next('buttons', 'Zisti, čo dnes vypekajú:', new Button('postback', 'Menučko na dnes 🥣', 'get_lunch:today'))
+                  .next('buttons', 'Už nikdy nezabudni, v ktorej triede učíš:', new Button('postback', 'Poďme na to! 🔕', 'set_teacher_name'))
+                  .next('text', 'Dokážem toho však oveľa viac 🙌')
+                 )
+          break;
+        case 'applicant':
+          resolve(new Response('text', 'Vitaj, nádejný GJHák! 😁')
+                  .next('text', 'Tu je zopár vecí, s ktorými ti rád pomôžem:')
+                  .next('buttons', 'Pomôžem ti napríklad nájsť', 
+                        new Button('postback', 'Cestu na GJH 🗺','request_travelmode')
+                        .next('postback', 'Prijímačkové testy 📄', 'request_test_subject'))
+                  .next('buttons', 'Nenašiel si, čo si hľadal?', new Button('url', 'Viac info 🔎', Constants.url.moreAboutApplication))
+                  .next('buttons', 'Psst... inak, vedel si, že u nás môžeš získať štipko od Nadácie Novohradská?', new Button('url', 'Ako na to? 💸', 'https://gjh.sk/o-skole/nadacia-novohradska/Nadacia_stipendijny_program.pdf'))
+                 )
+          break;
+        case 'parent':
+          resolve(new Response('text', 'Dobrý! 😄')
+                  .next('buttons', 'Chystáš sa na rodičko? Pomôžem napríklad nájsť:', 
+                        new Button('postback', 'Kabinet učiteľa 👩‍🏫', 'get_office_directions')
+                        .next('postback', 'Triedu dieťaťa 👩‍🎓', 'get_classroom')
+                        .next('postback','Cestu na GJH 🗺','request_travelmode'))
+                  .next('buttons', 'Mohlo by ťa tiež zaujímať:', 
+                        new Button('url', 'EduPage pre rodiča 👩🏼‍💻', Constants.url.eduPageParentLogin)
+                       .next('postback', 'Zaplatiť obedy 🍝', 'pay_lunch')
+                       .next('postback', 'Prispieť nadácii 🏫', 'contribute'))
+                 );
+          break;
+      }
+      this.profile.fRole(role);
     });
   }
   
@@ -199,14 +194,105 @@ module.exports = class PostBackHandler {
     });
   }
   
+  // Functions
   set_class() {
     return new Promise(resolve => {
       this.continualResponse.expect("get_class_id");
-      resolve(new Response("text", "Teraz mi napíš triedu, do ktorej chodíš.").next("text", "Napríklad si IB tretiak, tak napíš III.IBDA"));
+      resolve(new Response("text", "Napíš triedu, do ktorej chodíš").next("text", "Napr. ak si tretiak na IB, napíš III.IBDA:"));
     });
   }
   
-  get_current_lesson() {
-    return new TextHandler().simulate("current_lesson", new WitEntities().get(), this.profile, this.cache);
+  set_teacher_name() {
+    return new Promise(resolve => {
+      //this.continualResponse.expect("set_name");
+      //resolve(new Response("text", "Napíš, prosím, svoje priezvisko:"));
+      resolve(new Response("text", "Na tejto funkcii práve pracujeme 😉"));
+    });
+  }
+  
+  get_current_lesson(delta) {
+    let n_delta = Number(delta) || 0;
+    let entities = new WitEntities("delta", n_delta);
+    return new TextHandler().simulate("current_lesson", entities.get(), this.profile, this.cache);
+  }
+  
+  get_office_directions() {
+    return new TextHandler().simulate("get_office_directions", new WitEntities(), this.profile, this.cache);
+  }
+  
+  get_directions_to_known_office(office) {
+    return new Promise((resolve, reject) => {
+      OfficeDirections.getDirections(office)
+        .then((msg)=> resolve(new Response('text', msg)))
+        .catch((err_msg) => resolve(new Response('text', err_msg)));
+    });
+  }
+  
+  request_travelmode() {
+    return new TextHandler().simulate("request_travelmode", new WitEntities(), this.profile, this.cache)
+  }
+  
+  get_directions_to_school(travelmode) {
+    return new Promise(resolve => {
+      let response = new Response('text', undefined)
+      switch (travelmode) {
+        case 'bicycle':
+          response.next('buttons', '🅿️ Bike si odparkuj v stojane na strane gymnázia smerom do suterénu', new Button('url', 'Cesta 🗺', Constants.url.maps.schoolDirections + '&travelmode=bicycling'))
+          break;
+        case 'car':
+          response.next('buttons', '🚘', new Button('url', 'Cesta 🗺', Constants.url.maps.schoolDirections + '&travelmode=driving').next('postback', 'Parking 🅿️', 'get_parking_options'))
+          break;
+      }
+      resolve(response)
+    })
+  }
+  
+  get_classroom() {
+    return new TextHandler().simulate("get_classroom", new WitEntities(), this.profile, this.cache)
+  }
+  
+  get_classroom_number() {
+    return new TextHandler().simulate("get_classroom_number", new WitEntities(), this.profile, this.cache)
+  }
+  
+  get_directions_to_known_classroom(classroom) {
+    return new Promise((resolve, reject) => {
+      ClassroomDirections.getDirections(classroom)
+        .then((msg)=> resolve(new Response('text', msg)))
+        .catch((err_msg) => resolve(new Response('text', err_msg)));
+    });
+  }
+  
+  get_lunch(time) {
+    var entities;
+    switch(time) {
+      case 'today':
+        entities = new WitEntities('time_today');
+        break;
+      case 'tomorrow':
+        entities = new WitEntities('time_tomorrow');  
+        break;
+      default:
+        entities = new WitEntities('time_day', time);
+        break;
+    }
+    return new TextHandler().simulate('get_lunch', entities.get(), this.profile, this.cache);
+  }
+  
+  get_parking_options() {
+    return new TextHandler().simulate('get_parking_options', new WitEntities(), this.profile, this.cache);
+  }
+  
+  request_test_subject() {
+    return new TextHandler().simulate('request_test_subject', new WitEntities(), this.profile, this.cache);
+  }
+  
+  pay_lunch() {
+    return new TextHandler().simulate('pay_lunch', new WitEntities(), this.profile, this.cache);
+  }
+  
+  
+  contribute() {
+    return new TextHandler().simulate('contribute', new WitEntities(), this.profile, this.cache);
   }
 }

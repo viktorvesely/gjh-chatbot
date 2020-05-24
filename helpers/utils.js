@@ -1,6 +1,7 @@
 const GIF_API = process.env.GIPHY_API_KEY 
 var request = require('request')
 const http = require('http')
+const Actions = require('../helpers/actions.js');
 
 module.exports = {
   hasObjectKeys: (obj, keys) => {
@@ -178,10 +179,56 @@ module.exports = {
     return dayIndex;
   },
   
-  getSchoolAge() {
+  getYearsFrom(date_from) {
     let date_now = new Date();
-    let date_established = new Date(1959, 9, 1);
-    let diff = (date_now.getTime() - date_established.getTime())/(60 * 60 * 24 * 1000 * 365.25);
+    let diff = (date_now.getTime() - date_from.getTime())/(60 * 60 * 24 * 1000 * 365.25);
     return Math.round(diff);
+  },
+  
+  capitalize(s) {
+    return s.charAt(0).toUpperCase() + s.slice(1)
+  },
+  
+  valueIsInRange(val, a, b) {
+    return (a <= val && val < b)
+  },
+  
+  stripSurname(name, nameIsReversed=false) {
+    var nameArr = name.split(' ')
+    var surname
+    if (nameIsReversed) {
+      surname = nameArr[0]
+    } else {
+      surname = nameArr[nameArr.length-1]
+    }
+    return surname.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  },
+
+  getNameObject(name) {
+    // Edupage provides names in the format LastName FirstName
+    // This function reverses the order
+    var temp = name.split(' ');
+    return {
+      first: temp[1],
+      last: temp[0]
+    }
+  },
+
+  getPrettySurname(name) {
+    name = name.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase()
+    let nameArray = name.split(" ")
+    return nameArray[nameArray.length-1]
   }
+  /*
+  createDelayedReply(sender_psid, messageText) {
+    let wordsReadPerSecond = 3.3
+    if (sender_psid != null && (typeof messageText === 'string' || messageText instanceof String)) {
+      let numberOfWordsInMessage = messageText.split(" ").length
+      let readingDelayInMilliseconds = numberOfWordsInMessage/wordsReadPerSecond * 1000
+      Actions.setStatus('mark_seen', sender_psid)
+      setTimeout(Actions.setStatus('typing_off', sender_psid), readingDelayInMilliseconds)
+      setTimeout(Actions.setStatus('typing_off', sender_psid), delayInMilliseconds)
+    }
+  }
+  */
 }

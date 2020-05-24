@@ -4,6 +4,11 @@ module.exports = class Button {
     this.btns.push(this.determinTypeConstructor(type, arguments));
   }
   
+  _fromButtons(btns) {
+    this.btns = btns;
+    return this;
+  }
+  
   determinTypeConstructor(type, args) {
     let btn;
     switch (type) {
@@ -14,7 +19,7 @@ module.exports = class Button {
         btn = this.constructorUrl(args[1], args[2]);
         break;
       default:
-        throw Error("Invalid Button type. Expected url / postback, got " + type.toString());
+        throw Error("Invalid Button type. Expected url / postback, got " + type ? type.toString() : typeof type);
         break;
     }
     return btn;
@@ -32,14 +37,15 @@ module.exports = class Button {
     return obj;
   }
   
-  constructorUrl(display, url, webview_height_ratio ="tall", messenger_extensions="true") {
+  constructorUrl(display, url, webview_height_ratio="tall", messenger_extensions="true") {
     let obj = {
       title: display,
       type: "web_url",
       url: url,
-      webview_height_ratio: webview_height_ratio, // tall, compact, full
-      messenger_extensions: messenger_extensions
+      webview_height_ratio: webview_height_ratio // tall, compact, full
+      //messenger_extensions: messenger_extensions // includng this caused the URL button template not to work
     };
+    return obj;
   }
   
   get() {

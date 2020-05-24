@@ -58,11 +58,15 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname +  '/views/index.html');
 });
 
+app.get('/privacy-policy', (req, res) => {
+  res.sendFile(__dirname +  '/views/privacyPolicy.html');
+});
+
 app.post('/pipes-command', (req, res) => {
   req.session.reload(() => {
-    let pipelineHandler = new PipelineHandler(req.body, req.session.userId, actions);
+    let pipelineHandler = new PipelineHandler(req.body, req.session.userId, actions, messageAccepted);
     if(req.session.userId === undefined) {
-      res.send(pipelineHandler.response("session", {}, "sesssion has expired"));
+      res.send(pipelineHandler.response({}, "sesssion has expired"));
       return;
     }
     pipelineHandler.load().then(() => {
@@ -74,7 +78,7 @@ app.post('/pipes-command', (req, res) => {
       })
     },
     () => {
-      res.send(pipelineHandler.response("login", {}, "Error while loading your profile"));
+      res.send(pipelineHandler.response({}, "Error while loading your profile"));
     });
   });
 });
@@ -83,9 +87,9 @@ app.get('/shout', (req, res) => {
   req.session.reload(() => {
     let pipeline = new Pipeline(req.session.userId);
     if (pipeline.isOwner()) {
-      res.sendFile(__dirname + '/views/pipelineEditor.html');
+      res.sendFile(__dirname + '/views/app.html');
     } else {
-      res.sendFile(__dirname +  '/views/shout.html'); 
+      res.sendFile(__dirname +  '/views/app.html'); 
     }
   });
 });
@@ -118,9 +122,8 @@ app.post('/webhook', (req, res) => {
       let sender_psid = webhook_event.sender.id;
       
       if (webhook_event.message) {
-        actions.setStatus('mark_seen', sender_psid)
-        handleMessage(sender_psid, webhook_event.message);
-        
+        handleMessage(sender_psid, webhook_event.message)
+        //actions.setStatus('mark_seen', sender_psid)
       } else if (webhook_event.postback) {
         handlePostback(sender_psid, webhook_event.postback)
       }
@@ -134,7 +137,6 @@ app.post('/webhook', (req, res) => {
 });
 
 app.get('/webhook', (req, res) => {
-  const VERIFY_TOKEN = "<GJH_BOT>";
   
   let mode = req.query['hub.mode'];
   let token = req.query['hub.verify_token'];
@@ -142,7 +144,7 @@ app.get('/webhook', (req, res) => {
     
   if (mode && token) {
   
-    if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+    if (mode === 'subscribe' && token === process.env.VERIFY_TOKEN) {
       console.log('WEBHOOK_VERIFIED');
       res.status(200).send(challenge);
     } else {
@@ -201,11 +203,14 @@ function handleMessage(sender_psid, received_message) {
             messageAccepted(response, sender_psid);
           }, response => {
             messageRejected(response, sender_psid);
-          });
+          })
           messagePromise.finally(() => {
             profile.end();
           });
         }
+      }).catch(err => {
+        console.error(err);
+        messageAccepted(MessageHandler.__internal_error_response(), sender_psid);
       });
     }).catch(console.error);
 

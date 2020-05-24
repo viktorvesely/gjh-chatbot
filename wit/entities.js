@@ -1,5 +1,5 @@
 module.exports = class Entities {
-  constructor(name, value, confidence=1) {
+  constructor(name, value='', confidence=1) {
     this.entities = {};
     if (typeof name === "undefined") {
       return this;
@@ -16,7 +16,7 @@ module.exports = class Entities {
     }
   }
   
-  next(name, value, confidence=1) {
+  next(name, value='', confidence=1) {
     if (!this.entities.hasOwnProperty(name)) {
       this.entities[name] = [];
     }

@@ -1,5 +1,10 @@
 const Response = require('../responses/responseObject.js');
 const gTimeTableManager = require('../timetable/manager.js');
+const OfficeManager = require('../office/manager.js');
+const classroomManager = require('../classroom/manager.js');
+const classroomDirections = require('../classroom/directions.js');
+const WitEntities = require('../wit/entities.js');
+const TextHandler = require('./text.js');
 const levenshtein = require('fast-levenshtein');
 
 module.exports = class ContinualResponses {
@@ -77,8 +82,37 @@ module.exports = class ContinualResponses {
           resolve(new Response("text", "Zapamätal som si, že chodíš do " + best.name).next("text", "No nie je technológia úžasná?"));
         }
       }).catch((e) => {
-        reject(new Response("text", "Edupage mi nedá data, som angery.").setError(e));
+        reject(new Response("text", "Edupage mi nedá data, som angry.").setError(e));
       });
     });
+  }
+  
+  get_office_directions_from_teachername() {
+    return OfficeManager.getOfficeDirections(this.text)
+  }
+  
+  get_classroom_directions_from_teachername() {
+    return classroomManager.getClassroomDirections(this.text)
+  }
+  
+  set_name() {
+    let names = this.text.split(" ");
+    names = names.filter(value => !!value);
+    if (names.length !== 2) {
+      return new Promise(resolve => {
+        resolve(new Response("text", "Očákaval som len meno a priezvisko"));
+      });
+    }
+    debugger;
+    let entities = new WitEntities("s_first_name", names[0]).next("s_second_name", names[1]).get();
+    return new TextHandler().simulate("save_user", entities, this.profile, this.cache);
+  }
+  
+  get_classroom_number() {
+    return new Promise(resolve => {
+      classroomDirections.getDirections(this.text)
+        .then(msg => resolve(new Response('text', msg)))
+        .catch(msg => resolve(new Response('text', msg)))
+    })
   }
 }

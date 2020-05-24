@@ -23,6 +23,12 @@ module.exports = class Response {
     return this._hasError;
   }
   
+  export() {
+    return {
+      msgs: this.msgs
+    }
+  }
+  
   next (type, value, options =[], error=null) {
     this.msgs.push({
       type: type,
@@ -31,6 +37,7 @@ module.exports = class Response {
     })
     this.error = error || this.error;
     this._hasError = this.error ? true : false;
+    
     return this;
   }
 }

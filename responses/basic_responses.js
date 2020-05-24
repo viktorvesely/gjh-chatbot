@@ -1,5 +1,6 @@
 const Utils = require('../helpers/utils');
 const Actions = require('../helpers/actions'); // only for testing
+const Constants = require('../helpers/constants.js')
 
 // Content used across response
 const Musicians = {
@@ -19,7 +20,6 @@ const Venues = {
 }
 
 // Responses
-// premenované z 'DoesNotCompletelyUnderstandMessages'
 const MessageNotCompletelyUnderstood = ["Ajajáj, asi ti nerozumiem 😬", "Skús mi povedať niečo iné 😟", "Nech sa snažím, ako chcem, stále nerozmiem.", "Ani obraz, ani zvuk 🙈🙉", "Nechápem, ale odvolávam sa na to, že som AI 🤖", "Taký výraz zatiaľ nepoznám... zatiaľ 😏", "Je to vôbec veta, to, čo si napísal? 😟", "Spomaľ, máš privysokú rýchlosť... ale nie, len ti nerozumiem 🤔", "Trošku pomalšie musíš na mňa 😅"]
 
 const Moods = ['Dosť zle... asi binge-watchnem 3Blue1Brown 👀', 'Nerieš... 😔', 'Melanchólia, počúvam ' + Utils.getRandomElement(Musicians['sad']) + ' 🎧' , "Breakdown, dnes je to úplne nanič... Idem na vínko. 🍷", "Existuje názov pre krízu, ktorú má robot? 🤖", "Tak na 3 z 10. 🙁", "Ale tak v pohode, len pomaly, ale isto sa blížim k zrúteniu. ", "Som taký nejaký...", 'Akože dá sa 😐',  "Fajn.", 'Vpoho 😊',  "Život na internete je dosť fajn 👾", 'Integrujem si, takže luxusne 🧠', 'Derivujem si, idem siii 🧠', "Presakujem radosťou 😁", 'Wuuuuu, akurát som sa vrátil z vínka, takže život je zase paráda 🍷+🤖=🕺🏻', 'Výborne, ďakujem 🙋🏻‍♂️', 'Naozaj parádne']
@@ -68,7 +68,7 @@ const Reasons = {
   'ludia palia mosty' : ['Prečo len sú takí sprostí?'],
   'musim chodit do skoly': ['\"Aby z teba niečo vyrástlo\"', 'Posťažuj sa Márii Terézii', 'Lebo inde nedostaneš ázijskú panvičku?'],
   'obligation' : {
-    'chodit na slovencinu' : ['Abi sy vedel(a) pysaď', 'Skús Slovak A na IB, synu.', 'Aby si implementoval(a) trochej a jamb do tvojej najnovšej básne', 'Lebo pentatoniku si treba užívať aj inde ako v hudbe'],
+    'chodit na slovencinu' : ['Abi sy vedel(a) pysaď', 'Skús Slovak A na IB, synu.', 'Aby si implementoval(a) trochej a jamb do tvojej najnovšej básne', 'Elegické distichon'],
     'chodit na nemcinu' : ['Ganz einfach. Deutsch ist wohl \'ne interessante Sprache.', 'Ani mne sa nechcelo, ale bez nemčiny by som nemohol študovať v Göttingene, Giessene, Berlíne, vo Švajčiarsku a rigorózku by som asi nekonzultoval s nemeckým profesorom.', 'Aby si si vedel(a) vypýtať Horalku aj v Nemecku', 'Weiß ich nicht.', 'Woher soll ich so was denn wissen?', 'Tak, nech si vieš vypýtať (nealko)vínko aj na viedenských vianočných', 'Lebo neotvorili francúzštinu', 'Damit du mir verstehst'],
     'chodit na matiku' : ['Aby si sa prepracoval(a) ku kalkulusu', 'Lebo matika platila včera, platí dnes a bude platiť aj zajtra. Lepšia mena neexistuje.', 'Aby si pochopil(a), že som v skutočnosti výtvorom lokálnych miním', 'Aby si sa už nikdy neučil(a) vzorce na písomku z fyziky'],
     'chodit na anglictinu' : ['Aby si rozumel textom Mekyho Žbirku', 'Aby si mi preložil(a) Mekyho Žbirku', 'Lebo Ed Sheeran ťa gramatiku nenaučí 🤔'],
@@ -135,6 +135,8 @@ const FavouriteObjects = {
 }
 
 const BotNames = ['Jur Hronec predsa 😢', 'Jur, ale pre teba Jurko 😉', 'To naozaj nevieš? 😢', 'Miroslav Válek - Zápalky: \u000A\u000AZápalka smútku chytá potichučky \u000A*(už dávno nezáleží na mene)*, \u000Asamota prišla bez dotknutia kľučky \u000Aa pripomína veci stratené', 'Skúste ešte jednu otázku 🙄', 'Jur \u000A\u000A\u000A\u000A...nie Juraj']
+
+const PraiseReactions = ['Ale choď!', 'Snažím sa', '☺️', 'Ja viem 😏']
 
 // Variable used to change the bot's moods
 var MoodNumber = Moods.length -1; // Set mood to best (highest) possible
@@ -289,12 +291,16 @@ module.exports = {
     switch(about){
       case 'gjh':
          //BratMUN, DofE, Debateri, Eschenbach, olympionici, ocenenie za informatiku
-        response = 'GJH je škola, ktorá počas svojej ' + Utils.getSchoolAge() + '-ročnej histórie vybudovala jedinečnú komunitu iniciatívnych študentov a učiteľov, ktorí...';
+        response = 'GJH je škola, ktorá počas svojej ' + Utils.getYearsFrom(Constants.date.schoolEstablished) + '-ročnej histórie vybudovala jedinečnú komunitu iniciatívnych študentov vďaka špičkovému zboru učiteľov a množstvu úspešných absolventov 👩🏼‍🎓👨🏻‍🏫';
         break;
       case 'hronec':
-        response = 'Legendárny matematik';
+        response = 'Bol som slovenský vedec a profesor, mimoriadne angažovaný v oblasti matematického výskumu a pedagogiky. Zaslúžil som sa o založenie viacerých vysokých škôl na území Slovenska a zohral som významnú úlohu vo výchove novej generácie slovenských matematikov 🧮';
         break;
     }
     return response;
+  },
+  
+  acceptPraise: () => {
+    return Utils.getRandomElement(PraiseReactions);
   }
 }

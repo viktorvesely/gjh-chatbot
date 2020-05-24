@@ -1,4 +1,8 @@
 const Pipeline = require('../database/pipeline.js');
+const Wrapper =  require('../templates/wrapper.js');
+const TemplateDecoder = require('./templateDecoder.js');
+const ResponseHandler = require('./response.js');
+const SerieExecutor = require('../helpers/serieExecutor');
 
 module.exports = class PipelineHandler {
   constructor(req, userId, actions) {
@@ -13,6 +17,9 @@ module.exports = class PipelineHandler {
     switch(this.what) {
       case "create":
         break;
+      case "owner":
+        this.handler = "getOwner";
+        break;
       case "delete":
         break;
       case "prefix":
@@ -24,8 +31,14 @@ module.exports = class PipelineHandler {
       case "shout":
         this.handler = "shout";
         break;
-      case "appUpdate":
-        this.handler = "appUpdate";
+      case "getGroups":
+        this.handler = "getGroups";
+        break;
+      case "getAnnouncements":
+        this.handler = "getAnnouncements";
+        break;
+      case "builder":
+        this.handler = "getBuilder";
         break;
       default:
         this.handler = "unknown";
@@ -60,30 +73,17 @@ module.exports = class PipelineHandler {
     });
   }
   
+  getOwner() {
+    return new Promise((resolve, reject) => {
+      resolve(this.response(this.pipeline.isOwner()));
+    });
+  }
+  
   getPrefix() {
     return new Promise((resolve, reject) => {
       let prefix = this.pipeline.fPrefix();
       if (prefix) resolve(this.response(prefix));
       else reject(prefix, "Error while loading prefix");
-    });
-  }
-  
-  appUpdate() {
-    return new Promise((resolve, reject) => {
-      if (!this.pipeline.isOwner()) {
-        console.log("Non-owner pipeline was trying to acces appUpdate method.")
-        reject(this.response({}, "Error while shouting app update"));
-        return;
-      }
-      this.pipeline.getReceivers().then(receivers => {
-        receivers.forEach(user => {
-          this.actions.callSendTagAPI(user, this.value, "APPLICATION_UPDATE");
-        });
-        resolve(this.response(receivers.length));
-      }, errorMsg => {
-        console.error(errorMsg);
-        reject(this.response({}, "Error while shouting app update"))
-      })
     });
   }
   
@@ -99,17 +99,97 @@ module.exports = class PipelineHandler {
     })
   }
   
+  getBuilder() {
+    return new Promise((resolve => {
+      resolve(this.response(Wrapper));
+    }));
+  }
+  getAnnouncements() {
+    return new Promise((resolve, reject) => {
+      let flags = this.pipeline.flags;
+      let allTypes = [
+        this._group("General", "general"),
+        this._group("App update", "app_update"),
+        this._group("ŽŠR", "school_council"),
+        this._group("Rádio gjh", "school_radio")
+      ]
+      let types = [];
+      if (flags === "z") {
+        resolve(this.response(allTypes));
+        return;
+      }
+      if (flags.includes("a")) {
+        types.push(allTypes[0]);
+      }
+      if (flags.includes("r")) {
+        types.push(allTypes[3]);
+      }
+      if (flags.includes("s")) {
+        types.push(allTypes[2]);
+      }
+      resolve(this.response(types));
+    });
+  }
+  
+  _group(displayName, name) {
+    return {
+      display: displayName,
+      name: name
+    };
+  }
+  
+  getGroups() {
+    return new Promise((resolve, reject) => {
+      resolve(this.response([
+        this._group("Všetci", "everyone"),
+        this._group("Študenti", "students"),
+        this._group("Uchádzači", "applicants"),
+        this._group("Učitelia", "teachers"),
+        this._group("Rodičia", "parents")     
+              ]))
+    });
+  }
+  
   shout() {
     return new Promise((resolve, reject) => {
-      this.pipeline.getReceivers().then(receivers => {
-        receivers.forEach(user => {
-          this.actions.callSendTagAPI(user.sender_psid, this.value, "NON_PROMOTIONAL_SUBSCRIPTION"); // will not work for now, waiting for response from facebook
+      let type = this.value.type;
+      let response = this.value.response;
+      let groups = this.value.groups;
+      
+      let decodedResponse = new TemplateDecoder(response);
+      this.getAnnouncements().then(response => {
+        let verifyTypes = response.value;
+        if (!verifyTypes.find(group => group.name === type)) reject(this.response({}, "Could not verify your pipeline. Try refreshing the page"))
+        let tag;
+        
+        switch (type) {
+          case "general":
+            tag = "NON_PROMOTIONAL_SUBSCRIPTION";
+            break;
+          case "app_update":
+            tag = "APPLICATION_UPDATE";
+            break;
+          case "school_council":
+            tag = "NON_PROMOTIONAL_SUBSCRIPTION";
+            break;
+          case "school_radio":
+            tag = "NON_PROMOTIONAL_SUBSCRIPTION";
+            break;
+        }
+
+        this.pipeline.getReceivers().then(receivers => {
+          receivers.forEach(user => {
+            let responseHandler = new ResponseHandler(response, this.actions, sender_psid);
+            let todos = responseHandler.getTasks(tag);
+            let serieExecutor = new SerieExecutor(todos, () => { serieExecutor = undefined });
+            this.actions.callSendTagAPI(user, msg, tag); 
+          });
+          resolve(this.response(receivers.length));
+        }, errorMsg => {
+          console.error(errorMsg);
+          reject(this.response({}, "Error while shouting"))
         });
-        resolve(this.response("appUpdate", receivers.length, ""));
-      }, errorMsg => {
-        console.error(errorMsg);
-        reject(this.response("shout", {}, "Error while shouting"))
-      })
+      });
     });
   }
 
