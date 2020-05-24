@@ -1,69 +1,10 @@
-<html>
-  <head>
-    <title>
-      Jurko says
-    </title>
-    <meta name="description" content="messaging for gjh chatbot">
-    <link id="favicon" rel="icon" href="https://www.gjh.sk/informacie/logo-skoly/gjhlogo.jpg" type="image/x-icon">
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="/style.css">
-    <script src="/vue.min.js"></script>
-    <script src="/jquery-3.3.1.js"></script>
-  </head>
-  <body>
-    <script>
-      window.fbAsyncInit = function() {
-        FB.init({
-          appId            : 'your-app-id',
-          autoLogAppEvents : true,
-          xfbml            : true,
-          version          : 'v3.2'
-        });
-      };
-
-      (function(d, s, id){
-         var js, fjs = d.getElementsByTagName(s)[0];
-         if (d.getElementById(id)) {return;}
-         js = d.createElement(s); js.id = id;
-         js.src = "https://connect.facebook.net/en_US/sdk/xfbml.customerchat.js"; //https://connect.facebook.net/en_US/sdk.js 
-         fjs.parentNode.insertBefore(js, fjs);
-       }(document, 'script', 'facebook-jssdk'));
-    </script>
-    <div id="app">
-      <div class="login-form"> 
-        <form method="POST" action="/login" id="loginForm" @submit="login($event)">
-          <input type="text" placeholder="name" name="userId" v-model="inputText" @input="checkInput" spellcheck="false">
-        </form>
-      </div>
-      <img class="its-me" :style="animation" src="https://cdn.glitch.com/69a8ca3a-18d8-421a-912d-2c0f9593e89d%2Fjur_hronec_transprent.png?1542472300667">
-      <div class="response" v-if="output">
-        <span>
-          {{ output }}
-        </span>
-      </div>
-    </div>
-    <!-- CHAT BUBBLE -->
-    <!-- Load Facebook SDK for JavaScript -->
-    <div id="fb-root"></div>
-    <script>(function(d, s, id) {
-      var js, fjs = d.getElementsByTagName(s)[0];
-      if (d.getElementById(id)) return;
-      js = d.createElement(s); js.id = id;
-      js.src = 'https://connect.facebook.net/en_US/sdk/xfbml.customerchat.js'; //https://connect.facebook.net/en_US/sdk/xfbml.customerchat.js
-      fjs.parentNode.insertBefore(js, fjs);
-    }(document, 'script', 'facebook-jssdk'));
-    </script>
-
-    <!-- Your customer chat code -->
-    <div class="fb-customerchat"
-      attribution="setup_tool"
-      page_id="2026473490918349"
-      theme_color="#f6c343"
-      logged_in_greeting="Ahoj, ako môžem pomôcť?"
-      logged_out_greeting="Ahoj, ako môžem pomôcť?">
-    </div>
-    <script src="/page.js"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Yes I am a chatbot</title>
+</head>
+<body>
+  YES
+</body>
 </html>

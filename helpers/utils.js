@@ -1,7 +1,7 @@
 const GIF_API = process.env.GIPHY_API_KEY 
 var request = require('request')
 const http = require('http')
-const Actions = require('../helpers/actions.js');
+const Actions = require('../facebook/actions.js');
 
 module.exports = {
   hasObjectKeys: (obj, keys) => {

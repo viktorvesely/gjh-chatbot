@@ -1,2 +1,5 @@
-# Chat-bot for our school
-Hello i guess?
+# Chatbot-framework
+
+- Facebook integration
+- Wit integration
+- Context responses

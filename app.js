@@ -8,19 +8,18 @@ const
   app = express().use(body_parser.json()); // creates express http server
 
 const {Wit, log} = require('node-wit');
+require('dotenv').config();
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const shajs = require('sha.js');
 const attachmentHandler = require('./handlers/attachment.js');
-const Actions = require('./helpers/actions.js');
+const Actions = require('./facebook/actions.js');
 const Cache = require('./helpers/cache.js');
 const MessageHandler = require('./handlers/text.js');
 const SerieExecutor = require('./helpers/serieExecutor');
 const PostBackHandler = require('./handlers/postBacks.js');
 const Profile = require('./database/profile.js');
-const Pipeline = require('./database/pipeline.js');
 const ContinualResponse = require('./handlers/continualResponses.js');
-const PipelineHandler = require('./handlers/pipeline.js');
 const ResponseHandler = require('./handlers/response.js');
 
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
@@ -30,6 +29,7 @@ const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
 const Version = "beta 1.4";
 const actions = new Actions(PAGE_ACCESS_TOKEN);
 const cache = new Cache();
+
 
 const client = new Wit({
   accessToken: WIT_ACCES_TOKEN,
@@ -58,59 +58,6 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname +  '/views/index.html');
 });
 
-app.get('/privacy-policy', (req, res) => {
-  res.sendFile(__dirname +  '/views/privacyPolicy.html');
-});
-
-app.post('/pipes-command', (req, res) => {
-  req.session.reload(() => {
-    let pipelineHandler = new PipelineHandler(req.body, req.session.userId, actions, messageAccepted);
-    if(req.session.userId === undefined) {
-      res.send(pipelineHandler.response({}, "sesssion has expired"));
-      return;
-    }
-    pipelineHandler.load().then(() => {
-      pipelineHandler.resolve().then(response => {
-        res.send(response);
-      },
-      response => {
-        res.send(response);
-      })
-    },
-    () => {
-      res.send(pipelineHandler.response({}, "Error while loading your profile"));
-    });
-  });
-});
-
-app.get('/shout', (req, res) => {
-  req.session.reload(() => {
-    let pipeline = new Pipeline(req.session.userId);
-    if (pipeline.isOwner()) {
-      res.sendFile(__dirname + '/views/app.html');
-    } else {
-      res.sendFile(__dirname +  '/views/app.html'); 
-    }
-  });
-});
-
-app.post('/login', (req, res) => {
-  let body = req.body;
-  var pipeline = new Pipeline(body.userId);
-  pipeline.fOnLoad().then(() => {
-    let hash = shajs('sha256').update(body.userId + Date.now()).digest('hex');
-    req.session.userId = body.userId;
-    res.cookie("user", hash).send({
-      success: true
-    });
-  },
-                         () => {
-    res.send({
-      success: false,
-      msg: "something is wrong"
-    })
-  });
-});
 
 app.post('/webhook', (req, res) => {  
   let body = req.body;
@@ -144,7 +91,7 @@ app.get('/webhook', (req, res) => {
     
   if (mode && token) {
   
-    if (mode === 'subscribe' && token === process.env.VERIFY_TOKEN) {
+    if (mode === 'subscribe' && token === VERIFY_TOKEN) {
       console.log('WEBHOOK_VERIFIED');
       res.status(200).send(challenge);
     } else {
@@ -245,45 +192,4 @@ function handlePostback(sender_psid, received_postback) {
     })
   });
   return;
-  
- /* switch(payload) {
-    case "button_save_reminder_yes":
-      actions.callSendAPI(sender_psid, "Idem na to!");
-      remdb.insertNewReminder(Reminders[sender_psid]);
-      Reminders[sender_psid] = undefined;
-      break;
-    case "button_save_reminder_no":
-      actions.callSendAPI(sender_psid, "Akoby sa nestalo. Ak nie si spokojný s dátumom, odporúčam používať formát [deň]d[mesiac]m. Príklad: 28d9m pisem pisomku z chemie.");
-      Reminders[sender_psid] = undefined;
-      break;
-    case "button_reminder_delete_yes":
-      remdb.deleteReminder(sender_psid);
-      actions.callSendAPI(sender_psid, "Bam! A sú fuč.")
-      break;
-    case "button_reminder_delete_no":
-      actions.callSendAPI(sender_psid, "Ha! Skoro som ich vymazal.")
-      break;
-    case "button_right_name_yes":
-      userdb.addUser(sender_psid, Users[sender_psid]["first_name"], Users[sender_psid]["second_name"]);
-      Users[sender_psid] = undefined;
-      actions.callSendAPI(sender_psid, "Tvoje meno je navždy zaznamenané. No nie je to super?");
-      break;
-    case "button_right_name_no":
-      actions.callSendAPI(sender_psid, "Tak teda nič.");
-      Users[sender_psid] = undefined;
-      break;
-    case "button_get_started":
-      actions.messageRequest(sender_psid, responses.whatCanIDo(sender_psid));
-      break;
-    case "button_about_me":
-      actions.callSendAPI(sender_psid, "Som chatbot pre GJH-ákov. Bol som vytvorený Viktorom Veselým a ďalšími iniciatívnymi GJH-ákmi. Verzia " + Version);
-      break;
-    case "button_greeting":
-      responses.welcomeMessage(sender_psid, msg => {
-        actions.callSendAPI(sender_psid, msg);
-      });
-      break;
-    case "button_show_powers":
-      break;
-      }*/
 }
