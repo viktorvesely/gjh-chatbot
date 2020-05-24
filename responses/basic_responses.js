@@ -1,5 +1,6 @@
 const Utils = require('../helpers/utils');
 const Actions = require('../helpers/actions'); // only for testing
+const Constants = require('../helpers/constants.js')
 
 // Content used across response
 const Musicians = {
@@ -19,7 +20,6 @@ const Venues = {
 }
 
 // Responses
-// premenované z 'DoesNotCompletelyUnderstandMessages'
 const MessageNotCompletelyUnderstood = ["Ajajáj, asi ti nerozumiem 😬", "Skús mi povedať niečo iné 😟", "Nech sa snažím, ako chcem, stále nerozmiem.", "Ani obraz, ani zvuk 🙈🙉", "Nechápem, ale odvolávam sa na to, že som AI 🤖", "Taký výraz zatiaľ nepoznám... zatiaľ 😏", "Je to vôbec veta, to, čo si napísal? 😟", "Spomaľ, máš privysokú rýchlosť... ale nie, len ti nerozumiem 🤔", "Trošku pomalšie musíš na mňa 😅"]
 
 const Moods = ['Dosť zle... asi binge-watchnem 3Blue1Brown 👀', 'Nerieš... 😔', 'Melanchólia, počúvam ' + Utils.getRandomElement(Musicians['sad']) + ' 🎧' , "Breakdown, dnes je to úplne nanič... Idem na vínko. 🍷", "Existuje názov pre krízu, ktorú má robot? 🤖", "Tak na 3 z 10. 🙁", "Ale tak v pohode, len pomaly, ale isto sa blížim k zrúteniu. ", "Som taký nejaký...", 'Akože dá sa 😐',  "Fajn.", 'Vpoho 😊',  "Život na internete je dosť fajn 👾", 'Integrujem si, takže luxusne 🧠', 'Derivujem si, idem siii 🧠', "Presakujem radosťou 😁", 'Wuuuuu, akurát som sa vrátil z vínka, takže život je zase paráda 🍷+🤖=🕺🏻', 'Výborne, ďakujem 🙋🏻‍♂️', 'Naozaj parádne']
@@ -29,13 +29,13 @@ const LifeMeanings = ["42, ha, dobrý vtip, že? Okej, koniec srandy. Nie, živo
 const CurrentTime =  ["11:42... skontroloval si ma? Hej? Tak na čo sa pýtaš? 😒", "[MEME]", "Neviem, ale určite nestíhaš. ⏳", "Hneď to bude, len si skontrolujem hodinky... (nemám hodinky)", 'Neviem, ale slzy sveta sú večné ⏳'];
 
 const Jokes = ['Nekonečne veľa matematikov príde do baru. Prvý si dá pivo, druhý si dá pol piva, tretí štvrť piva. Barman na to: „Vedel som to! Poznám vaše limity!“ a načapuje im dve pivá.',
-              'Supravodič príde do baru, a sadne si za bar. Príde barman a povie: \u000A„Supravodičom nenaliavame!“ \u000ASupravodič sa postaví a bez odporu odíde.',
-              'Traja štatistici lovia jeleňa. Prvý vystrelí a minie ho o pol metra vľavo. Druhý vystrelí a minie ho o pol metra vpravo. \u000ATretí na to: “Máme ho, máme ho!”',
+              'Supravodič príde do baru, a sadne si za bar. Príde barman a povie: A„Supravodičom nenaliavame!“ Supravodič sa postaví a bez odporu odíde.',
+              'Traja štatistici lovia jeleňa. Prvý vystrelí a minie ho o pol metra vľavo. Druhý vystrelí a minie ho o pol metra vpravo. Tretí na to: “Máme ho, máme ho!”',
               'Množina funkcií si len tak leží na pláži. Zrazu pribehne derivácia : - "Ktorá z vás neutečie tak ju zderivujem!" Všetky funkcie až na jednu ušli. - "A ty čo? Ty sa ma nebojíš?" -"Nebojím, ja som totižto e^x." Na to sa derivácia potmehúdsky usmeje a povie: - "Ale je som derivácia podľa y!"',
               'Prečo si matematici často mýlia Vianočné sviatky a Halloween? \u000A\u000ALebo 31 Oct = 25 Dec',
               'Rimanom nepripadala matematika veľmi zaujímavá, pretože x bolo vždy 10.',
               'Ako vyjadríte matematicky neveru? Hop na druhú.',
-              'Je ťažké byť synom matematika. \u000APri obede otec hovorí synovi: “Ak nezješ zeleninu, nedostaneš zmrzlinu!” \u000ASyn s veľkou námahou zeleninu zjedol, avšak zmrzlinu nedostal…',
+              'Je ťažké byť synom matematika. Pri obede otec hovorí synovi: “Ak nezješ zeleninu, nedostaneš zmrzlinu!” \u000A\u000ASyn s veľkou námahou zeleninu zjedol, avšak zmrzlinu nedostal…',
               'Logikovi a jeho žene sa narodí dieťa. Lekár podáva novonarodené bábätko otcovi.\u000AManželka sa netrpezlivo pýta: “Je to dievčatko alebo chlapec?” \u000A"Áno," odpovedá logik.']
 
 const Opinions = {
@@ -68,7 +68,7 @@ const Reasons = {
   'ludia palia mosty' : ['Prečo len sú takí sprostí?'],
   'musim chodit do skoly': ['\"Aby z teba niečo vyrástlo\"', 'Posťažuj sa Márii Terézii', 'Lebo inde nedostaneš ázijskú panvičku?'],
   'obligation' : {
-    'chodit na slovencinu' : ['Abi sy vedel(a) pysaď', 'Skús Slovak A na IB, synu.', 'Aby si implementoval(a) trochej a jamb do tvojej najnovšej básne', 'Lebo pentatoniku si treba užívať aj inde ako v hudbe'],
+    'chodit na slovencinu' : ['Abi sy vedel(a) pysaď', 'Skús Slovak A na IB, synu.', 'Aby si implementoval(a) trochej a jamb do tvojej najnovšej básne', 'Elegické distichon'],
     'chodit na nemcinu' : ['Ganz einfach. Deutsch ist wohl \'ne interessante Sprache.', 'Ani mne sa nechcelo, ale bez nemčiny by som nemohol študovať v Göttingene, Giessene, Berlíne, vo Švajčiarsku a rigorózku by som asi nekonzultoval s nemeckým profesorom.', 'Aby si si vedel(a) vypýtať Horalku aj v Nemecku', 'Weiß ich nicht.', 'Woher soll ich so was denn wissen?', 'Tak, nech si vieš vypýtať (nealko)vínko aj na viedenských vianočných', 'Lebo neotvorili francúzštinu', 'Damit du mir verstehst'],
     'chodit na matiku' : ['Aby si sa prepracoval(a) ku kalkulusu', 'Lebo matika platila včera, platí dnes a bude platiť aj zajtra. Lepšia mena neexistuje.', 'Aby si pochopil(a), že som v skutočnosti výtvorom lokálnych miním', 'Aby si sa už nikdy neučil(a) vzorce na písomku z fyziky'],
     'chodit na anglictinu' : ['Aby si rozumel textom Mekyho Žbirku', 'Aby si mi preložil(a) Mekyho Žbirku', 'Lebo Ed Sheeran ťa gramatiku nenaučí 🤔'],
@@ -78,7 +78,7 @@ const Reasons = {
     'zit' : ['Aby si tvoril(a) 🎨', 'Aby si nepodľahol/hla absurdite bytia', 'Camus calling ☎️', 'To je celkom robustná otázka. Nájdi v niečom zaľúbenie. Osobne odporúčam lineárne difky, ale chápem, ak to nie je úplne pre teba. 😕', 'Aby si si zodpovedal(a) túto otázku']
   },
   'cannot' : {
-    'zostat doma' : ['Chýbal(a) by si spolužiakom...', 'Vymeškáš školu... čo ak sa práve budú preberať lineárne difky?', 'Aby aj po tebe jedného dňa bola pomenovaná škola 😉'],
+    'zostat doma' : ['Vymeškáš školu... čo ak sa práve budú preberať lineárne difky?', 'Aby aj po tebe jedného dňa bola pomenovaná jedna z najlepších škôl 😏'],
     'ist na obed' : ['Tisíc dôvodov, na sto rozchodooov... neviem 😅'],
     'jest na hodine' : ['Lebo mlaskáš 😦', 'Lebo nežijeme preto, aby sme jedli, ale jeme preto, aby sme žili', 'Lebo aj učitelia sú hladní a nemôžu jesť', '\" Stačí iba malý kusok nehy, na hodine som zjedol dva chleby\"']
   }
@@ -123,19 +123,23 @@ const Activities = {
 const FavouriteObjects = {
   'krajinu' : ['Slovensko, ale aj v Rumunsku bolo dosť fajn 🤔', 'Slovensko', 'Slovenskooo', 'Slovensko veď'],
   'pesnicku' : ['Any Colour You Like od Pink Floyd', 'Asi každú z The Dark Side of the Moon od PF'],
-  'film' : ['12 Angry Men', '➡ 12 Angry Men ⬅'],
+  'film' : ['12 Angry Men', '➡ 12 Angry Men ⬅', 'Shrek'],
   'album' : ['The Dark Side of the Moon'],
-  'hudbu' : ['Progrock'],
-  'pocuvas' : ['Pink Floyd', 'progrock'],
+  'hudbu' : ['Tú od Tublatanky', 'Dramáče', 'Shakiru 😃'],
+  'pocuvas' : ['Dnes mám rande so svojím mestom...', 'Dramáče', 'Roba Kazíka', 'Mekyho Žbirku', 'Atlantídu od Mekyho Žbirku', 'Veľký sen mora v podaní J. Lehotského', 'Zlodeja slnečníc od Elánu', 'Chop Suey... chcelo by to ázijskú panvičku'],
   'pitie' : ['Kofola', 'Kofolu mám najradšej', 'Kofolu zbožňujem'],
-  'predmet' : ['Matematika', 'Matikaa', 'Tak to je hádam celkom jasné, matika!'],
-  'miesto' : ['Gočovo', 'G.O.Č.O.V.O.', 'ovočoG'],
-  'jedlo' : ['Horalku... ale aj na Vietnam treba niekedy vybehnúť', 'Horalku'],
+  'predmet' : ['Matematika', 'Matikaa', 'Tak to je hádam celkom jasné, matematika!'],
+  'miesto' : ['Gočovo', 'G.O.Č.O.V.O.'],
+  'jedlo' : ['Horalka... ale aj na Vietnam treba niekedy vybehnúť', 'Horalka'],
   'farba' : ['Niekde medzi #323cd2 a #adb2ff', 'Niekedy #323cd2 a inokedy #adb2ff']
 }
 
+const BotNames = ['Jur Hronec predsa 😢', 'Jur, ale pre teba Jurko 😉', 'To naozaj nevieš? 😢', 'Miroslav Válek - Zápalky: \u000A\u000AZápalka smútku chytá potichučky \u000A*(už dávno nezáleží na mene)*, \u000Asamota prišla bez dotknutia kľučky \u000Aa pripomína veci stratené', 'Skúste ešte jednu otázku 🙄', 'Jur \u000A\u000A\u000A\u000A...nie Juraj']
+
+const PraiseReactions = ['Ale choď!', 'Snažím sa', '☺️', 'Ja viem 😏']
+
 // Variable used to change the bot's moods
-var MoodNumber = Moods.length -1; // Set mood to best (highest = best) possible
+var MoodNumber = Moods.length -1; // Set mood to best (highest) possible
 
 module.exports = {
   
@@ -190,7 +194,7 @@ module.exports = {
     } else {
       opinion_obj = {text: 'Na toto ešte nemám názor 😥'};
     }
-    
+
     return opinion_obj;
   },
   
@@ -209,7 +213,6 @@ module.exports = {
       
       if (entities.hasOwnProperty('obligation')) {
         dict_of_reasons = Reasons['obligation'];
-        console.log(dict_of_reasons);
       } else if (entities.hasOwnProperty('cannot')) {
         dict_of_reasons = Reasons['cannot'];
       } else {
@@ -254,7 +257,7 @@ module.exports = {
   },
   
   handleSwearing : () => {
-    let response = 'Dúfam, že mne nenadávaš... ' + Utils.getRandomElement(SwearingResponses);
+    let response = 'Dúfam, že nenadávaš mne... ' + Utils.getRandomElement(SwearingResponses);
     return response;
   },
   
@@ -268,9 +271,36 @@ module.exports = {
     return response;
   },
   
-  tellFavourite : () => {
+  tellFavourite : (favourite_obj) => {
+    let response;
+    if (! FavouriteObjects.hasOwnProperty(favourite_obj)) {
+      response = 'Nad tým som sa nikdy nezamýšľal 🤔';
+    } else {
+      response = Utils.getRandomElement(FavouriteObjects[favourite_obj]);
+    }
+    return response;
+  },
+  
+  botName : () => {
+    return Utils.getRandomElement(BotNames);
+  },
+  
+  getInfo: (about) => {
     let response;
     
+    switch(about){
+      case 'gjh':
+         //BratMUN, DofE, Debateri, Eschenbach, olympionici, ocenenie za informatiku
+        response = 'GJH je škola, ktorá počas svojej ' + Utils.getYearsFrom(Constants.date.schoolEstablished) + '-ročnej histórie vybudovala jedinečnú komunitu iniciatívnych študentov vďaka špičkovému zboru učiteľov a množstvu úspešných absolventov 👩🏼‍🎓👨🏻‍🏫';
+        break;
+      case 'hronec':
+        response = 'Bol som slovenský vedec a profesor, mimoriadne angažovaný v oblasti matematického výskumu a pedagogiky. Zaslúžil som sa o založenie viacerých vysokých škôl na území Slovenska a zohral som významnú úlohu vo výchove novej generácie slovenských matematikov 🧮';
+        break;
+    }
     return response;
+  },
+  
+  acceptPraise: () => {
+    return Utils.getRandomElement(PraiseReactions);
   }
 }

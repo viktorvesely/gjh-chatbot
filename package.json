@@ -1,6 +1,6 @@
 {
   "name": "messenger-quick-start",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "gjh_bot webhook",
   "main": "app.js",
   "scripts": {
@@ -10,13 +10,20 @@
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.18.3",
+    "cheerio": "^0.22.0",
     "express": "^4.16.3",
     "nedb": "^1.8.0",
     "node-wit": "^4.3.0",
     "request": "^2.88.0",
-    "sqlite": "^3.0.0"
+    "sqlite": "^3.0.0",
+    "cookie-parser": "^1.4.3",
+    "sha.js": "^2.4.11",
+    "express-session": "^1.15.6",
+    "fast-levenshtein": "^2.0.6",
+    "axios": "^0.19.0",
+    "querystring": "^0.2.0"
   },
   "engines": {
-    "node": "8"
+    "node": "10"
   }
 }

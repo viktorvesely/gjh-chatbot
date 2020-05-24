@@ -6,12 +6,15 @@ module.exports = class SerieExecutor {
   }
   
   next() {
-    if (this.todos.length === 0) {
+    if (this.todos.length < 1) {
       this.onFinish();
+      return;
     }
     this.todos[0]().then(() => {
       this.todos.splice(0, 1);
       this.next();
+    }, error => {
+      console.error(error);
     });
   }
   

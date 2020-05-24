@@ -5,10 +5,9 @@ module.exports = {
   
   deleteReminderBySubject: function (sender_psid, subject, callback) {
     let db = new sqlite3.Database(this.databasePath, (err) => {
-    if (err) {
-      console.error(err.message);
-    }
-
+      if (err) {
+        console.error(err.message);
+      }
     });
   db.run("DELETE FROM notifications WHERE sender_psid=? AND LOWER(subject) LIKE ?", [sender_psid, subject.substring(0,3).toLowerCase() + '%'] , (err) => {
     if (err) {
@@ -68,7 +67,7 @@ module.exports = {
       }
     });
   
-    let save = [reminder["target"], reminder["day"], reminder["month"], reminder["year"], reminder["lesson"], reminder["timestamp"]];
+    let save = [reminder.target, reminder.day, reminder.month, reminder.year, reminder.what, reminder.timestamp];
 
     db.run('INSERT INTO notifications(sender_psid,day,month,year,subject,timestamp) VALUES(?,?,?,?,?,?)', save, function(err) {
       if (err) {

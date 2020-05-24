@@ -5,13 +5,13 @@ const fetch = require('node-fetch');
 module.exports = class Actions {
   constructor(PAGE_ACCESS_TOKEN) {
     this.__PAGE_ACCESS_TOKEN = PAGE_ACCESS_TOKEN;
-    this.__attachmentResponseOffsetTime = 1; // seconds
+    this.__attachmentResponseOffsetTime = 0; // seconds
   }
   
   messageRequest(sender_psid, structure, type="RESPONSE") {
     structure['messaging_type'] = type;
     
-    const qs = 'access_token=' + encodeURIComponent(this.__PAGE_ACCESS_TOKEN); // Here you'll need to add your PAGE TOKEN from Facebook
+    const qs = 'access_token=' + encodeURIComponent(this.__PAGE_ACCESS_TOKEN);
     return fetch('https://graph.facebook.com/v2.6/me/messages?' + qs, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -20,49 +20,25 @@ module.exports = class Actions {
   }
   
   facebookRequest(structure) {
-    request({
-      "uri": "https://graph.facebook.com/v2.6/me/messages",
-      "qs": { "access_token": this.__PAGE_ACCESS_TOKEN },
-      "method": "POST",
-      "json": structure
-    }, (err, res, body) => {
-      if (!err) {
-        console.log('message sent!')
-      } else {
-        console.error("Unable to send message:" + err);
-      }
+    
+    const qs = 'access_token=' + encodeURIComponent(this.__PAGE_ACCESS_TOKEN);
+    return fetch('https://graph.facebook.com/v2.6/me/messages?' + qs, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(structure)
     });
   }
   
   sendButtons(sender_psid, question, buttons) {
-    var btns = [];
-    for (let i = 0; i< buttons.length; ++i) {
-      let button = buttons[i];
-      btns.push({
-        "type": "postback",
-        "title": button.display,
-        "payload": button.value
-      })
+    let payload = {
+      "template_type":"button",
+      "text": question,
+      "buttons": buttons
     }
-    let request_body ={
-      "recipient":{
-        "id": sender_psid
-      },
-      "message":{
-        "attachment":{
-          "type":"template",
-          "payload":{
-            "template_type":"button",
-            "text": question,
-            "buttons": btns
-          }
-        }
-      }
-    }
-    return this.messageRequest(sender_psid, request_body);
+    return this.sendTemplate(sender_psid, payload);
   }
   
-  sendConfirmation(sender_psid, question, payloadYes, payloadNo) {
+  sendTemplate(sender_psid, payload, tag="") {
     let request_body ={
       "recipient":{
         "id": sender_psid
@@ -70,30 +46,18 @@ module.exports = class Actions {
       "message":{
         "attachment":{
           "type":"template",
-          "payload":{
-            "template_type":"button",
-            "text": question,
-            "buttons":[
-              {
-                "type": "postback",
-                "title": "Áno",
-                "payload": payloadYes
-              },
-              {
-                "type": "postback",
-                "title": "Nie",
-                "payload": payloadNo
-              }
-            ]
-          }
+          "payload": payload
         }
       }
     }
-    return this.messageRequest(sender_psid, request_body);
-
+    if (tag) {
+      request_body.messaging_type = "MESSAGE_TAG";
+      request_body.tag = tag;
+    }
+    return this.messageRequest(sender_psid, request_body, tag ? "MESSAGE_TAG" : undefined);
   }
 
-  callSendTagAPI(sender_psid, response, tag = "ISSUE_RESOLUTION") {
+  callSendTagAPI(sender_psid, response, tag) {
      let request_body = {
       "recipient": {
         "id": sender_psid
@@ -101,12 +65,11 @@ module.exports = class Actions {
       "message": new Msg(response),
       "tag": tag
     }
-    return this.messageRequest(sender_psid, request_body);
+    return this.messageRequest(sender_psid, request_body, "MESSAGE_TAG");
   }
   
   setStatus(status, sender_psid) {
     let request_body = {
-      "messaging_type": 'RESPONSE',
       "recipient": {
         "id": sender_psid
       },
@@ -115,27 +78,18 @@ module.exports = class Actions {
     return this.messageRequest(sender_psid, request_body); 
   }
 
-  callSendAPI(sender_psid, response, type='RESPONSE') {
+  callSendAPI(sender_psid, response, tag) {
     let request_body = {
-      "messaging_type": type,
       "recipient": {
         "id": sender_psid
       },
       "message": new Msg(response) 
     }
-    return this.messageRequest(sender_psid, request_body, type);
-  }
-  
-  setGreetingMsg() {
-    let request_body = {"greeting":[
-      {
-        "locale": "default",
-        "text": "Posťažuj sa o študentskom živote, na komplikované veci zo zásady neodpisujem"
-      }
-    ]};
-    let request_body_first = {"get_started": {"payload": "button_get_started"}};
-    this.facebookRequest(request_body_first);
-    this.facebookRequest(request_body);
+    if (tag) {
+      request_body.messaging_type = "MESSAGE_TAG";
+      request_body.tag = tag;
+    }
+    return this.messageRequest(sender_psid, request_body, tag ? "MESSAGE_TAG" : undefined);
   }
   
   sendAttachment(sender_psid, type, url) {
@@ -153,14 +107,7 @@ module.exports = class Actions {
         }
       }
     }
-    var attachmentSent = this.messageRequest(sender_psid, request_body, 'UPDATE');
-    return new Promise(resolve => {
-      attachmentSent.then(() => {
-        setTimeout(() => {
-          resolve();
-        }, this.__attachmentResponseOffsetTime * 1000);
-      })
-    })
+    return this.messageRequest(sender_psid, request_body, 'UPDATE');
   }
   
 }

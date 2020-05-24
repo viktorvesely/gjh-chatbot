@@ -12,11 +12,11 @@ module.exports = {
     
     this.checkIfExist(sender_psid, (exist) => {
       if (exist) {
-        db.all("UPDATE users SET first_name = ?, second_name = ? WHERE sender_psid=?", [name, surrname, sender_psid], (err) => {
-          console.error(err.message);
+        db.all("UPDATE users SET first_name = ?, second_name = ? WHERE sender_psid=?", [name, surrname, sender_psid], (changed, err) => {
+          console.error(err);
         });
       } else {
-        db.run("INSERT INTO users(sender_psid,first_name,second_name) VALUES(?,?,?)", [sender_psid, name, surrname], (err) => {
+        db.run("INSERT INTO users(sender_psid,first_name,second_name) VALUES(?,?,?)", [sender_psid, name, surrname], (changed, err) => {
           if (err){
             console.error(err.message);
           }

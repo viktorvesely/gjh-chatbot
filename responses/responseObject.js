@@ -13,8 +13,20 @@ module.exports = class Response {
     this._hasError = error ? true : false;
   }
   
+  setError(error) {
+    this.error = error;
+    this._hasError = true;
+    return this;
+  }
+  
   hasError() {
     return this._hasError;
+  }
+  
+  export() {
+    return {
+      msgs: this.msgs
+    }
   }
   
   next (type, value, options =[], error=null) {
@@ -25,6 +37,7 @@ module.exports = class Response {
     })
     this.error = error || this.error;
     this._hasError = this.error ? true : false;
+    
     return this;
   }
 }

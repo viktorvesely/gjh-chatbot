@@ -9,17 +9,15 @@ module.exports = class ReminderInterface {
   print(reminders) {
     let message = "Čaká ťa,\n";
 
-    let exist = false;
+    if (reminders.length < 1) {
+      return "Máš voľno. Wuuuu.";
+    }
     reminders.forEach((row) => {
-      exist = true;
       message += row["subject"].substring(0, row["subject"].length -1) + "a";
       message += " " + (row["day"] + 1 ) + "." + (row["month"] + 1) + "." + row["year"] + ",\n";
     });
     message += "To bude ale srandy."
-    if (exist === false) {
-      message = "Máš voľno. Wuuuu.";
-    }
-    return message
+    return message;
   }
   
   makeConfirmationQuestion(reminder) {
@@ -33,24 +31,11 @@ module.exports = class ReminderInterface {
     var now = new Date();
     switch(name) {
       case "time_day":
-        let day = "";
-        let dayId = -1;
-        for (let i = 0; i < this.days.length; ++i) {
-          if (this.days[i].substring(0,3) == entity[0].value.substring(0,3)) {
-            day = this.days[i];
-            dayId = i;
-            break;
-          }
-        }
-        if (!day) {
+        let diff = Utils.dayOffset(entity[0].value, this.days);
+        if (diff === -1) {
           reminder.error = "Nerozumiem, ktorý deň myslíš."
           return;
         }
-        let diff = dayId - now.getDay();
-        if (diff < 0) {
-          diff = 7 - Math.abs(diff)
-        }
-        diff -= 1;
         reminder.day = now.getDate() + diff;
         reminder.month = now.getMonth();
         break;
