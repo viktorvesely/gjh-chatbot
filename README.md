@@ -2,4 +2,9 @@
 
 - Facebook integration
 - Wit integration
-- Context responses
+- Responses:
+    - Texts
+    - Buttons
+    - Images
+    - Lists
+    - Gifs

@@ -1,24 +1,26 @@
-
 'use strict';
+
+require('dotenv').config(); // for .env usage
 
 const 
   request = require('request'),
   express = require('express'),
   body_parser = require('body-parser'),
-  app = express().use(body_parser.json()); // creates express http server
+  app = express().use(body_parser.json()), // creates express http server
+  session = require('express-session'),
+  cookieParser = require('cookie-parser'),
+  shajs = require('sha.js')
 
 const {Wit, log} = require('node-wit');
-require('dotenv').config();
-const cookieParser = require('cookie-parser');
-const session = require('express-session');
-const shajs = require('sha.js');
+
 const attachmentHandler = require('./handlers/attachment.js');
 const Actions = require('./facebook/actions.js');
 const Cache = require('./helpers/cache.js');
 const MessageHandler = require('./handlers/text.js');
 const SerieExecutor = require('./helpers/serieExecutor');
 const PostBackHandler = require('./handlers/postBacks.js');
-const Profile = require('./database/profile.js');
+// const Profile = require('./database/profile.js');
+const ProfileDatabase = require('./database/ProfileDatabase.js');
 const ContinualResponse = require('./handlers/continualResponses.js');
 const ResponseHandler = require('./handlers/response.js');
 
@@ -26,31 +28,23 @@ const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 const WIT_ACCES_TOKEN = process.env.WIT_ACCES_TOKEN;
 const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
 
-const Version = "beta 1.4";
 const actions = new Actions(PAGE_ACCESS_TOKEN);
 const cache = new Cache();
-
-
+const Profile = new ProfileDatabase();
 const client = new Wit({
   accessToken: WIT_ACCES_TOKEN,
   logger: new log.Logger(log.DEBUG) // optional
 });
 
+//Test
+const testMSg = "awiodjaoiwdjoawj";
+client.message(testMSg, {}).then(data => {
+
+})
+//Test end
+
 app.use(express.static('public'));
 app.use(cookieParser());
-
-app.use(session({
-    key: 'user_sid',
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    genid: function(req) {
-      return shajs('sha256').update(Date.now()).digest('hex'); // use UUIDs for session IDs
-    },
-    cookie: { 
-      secure: true
-    }
-}));
 
 app.listen(process.env.PORT || 1337, () => console.log('webhook is listening'));
 

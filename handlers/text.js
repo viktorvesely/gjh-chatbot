@@ -1,6 +1,7 @@
 const Utils = require('../helpers/utils.js');
 const Response = require('../responses/responseObject.js');
 const ContinualResponse = require('./continualResponses.js');
+const WitResponse = require('../wit/witResponse.js');
 
 class MessageHandler {
   constructor (response, profile, cache, originalText) {
@@ -8,17 +9,16 @@ class MessageHandler {
       return this;
     }
     this.cache = cache;
-    this.response = response;
+    this.response = new WitResponse(response);
     this.sender_psid = profile.fSender_psid();
     this.profile = profile;
     this.originalText = originalText;
     this.continualResponse = new ContinualResponse(profile, cache, originalText);
-    this.entities = response.entities;
     this.intent = response.entities ? response.entities.intent : undefined;
   }
   
   simulate(intent, entities, profile, cache) {
-    this.entities = entities;
+    this.response = new WitResponse().fromEntities(entities);
     this.profile = profile;
     this.continualResponse = new ContinualResponse(profile, cache, undefined);
     this.sender_psid = profile.fSender_psid();
@@ -27,39 +27,39 @@ class MessageHandler {
   }
   
   resolve () {
-    let entities = this.entities;
-    let intent = this.intent;
-    if (Utils.isConfident(intent)) {
-      return this[intent[0].value]();
+    let intent = this.response.intent();
+
+    if (!intent) {
+      throw new Error("The Wit response was not initliazed properly. The intent was null");
     }
-    else if (Object.keys(entities).length > 0) {
-      return this.partiallyDontKnow(entities);
+
+    if(intent === WitResponse.NO_INTENT) {
+      this.dontKnow();
     }
-    else {
-      return this.ret(this.dontKnow());
-    } 
+
+    let isConfident, value;
+    value = intent[0];
+    isConfident = intent[1];
+
+    if (!isConfident) {
+      this.partiallyDontKnow(value);
+    }
+
+    return this[value]();
   }
   
   dontKnow() {
     return this.ret("Vobec neviem")
   }
   
-  partiallyDontKnow(entities) {
+  partiallyDontKnow(value) {
     return new Promise(resolve => {
-      var max = -1;
-      var maxName;
-      for (let name in entities) {
-        let entity = entities[name];
-        if(entity[0].confidence > max) {
-          max = entity[0].confidence;
-          maxName = name;
-        }
+      let helperFunctionName = value + "$help";
+      let helperFunction = this[helperFunctionName];
+      if(typeof helperFunction === "undefined") {
+        return resolve(new Response("text", "vobec neviem")); // helper function not implemented -> BAD BEHAVIOUR!
       }
-      if (maxName === "intent") {
-        resolve(new Response("text","Trochu chápem, čo sa mi snažíš povedať, ale asi to nie je formáciu vety").next("text", "Skús to trochu inak 😅"));
-        return;
-      }
-      resolve(new Response("text", "Uhm, nerozumiem, čo si tým myslel. Rozumiem, ale slovíčku \"" + entities[maxName][0]["value"] + "\".").next("text", "Skús ho použiť v inom kontexte."));
+      return helperFunction();
     })
   }
   
@@ -77,7 +77,16 @@ class MessageHandler {
   static __internal_error_response() {
     return new Response("text", "Internal server error has occured while trying to resolve your request").next("text", "Tough luck pre teba (pls skontaktuj môjho developera)");
   }
-  
+
+  show_case() {
+    return new Promise((resolve, reject) => {
+      resolve(new Response("text", "Caukymnauky").next("text", "Popismenkujeme si?"));
+    });
+  }
+
+  show_case$help(resolve) {
+    resolve(new Response("text", "Snazis sa dostat do show_case? Sprav to takto ..."));
+  }
 
   // Place intent handlers here
 };
