@@ -5,7 +5,7 @@ const TextHandler = require('./text.js');
 module.exports = class ContinualResponses {
   constructor(profile, cache, text) {
     this.__cacheKey = "__continualResponse";
-    this.sender_psid = profile.fSender_psid();
+    this.sender_psid = profile.sender_psid;
     this.cache = cache;
     this.text = text;
     this.profile = profile;

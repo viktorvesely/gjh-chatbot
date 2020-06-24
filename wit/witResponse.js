@@ -42,7 +42,7 @@ class WitResponse {
   initEntitites(entities) {
     this.entities = {};
     for (let key in entities) {
-      this.entities[key] = new WitEntity(response.entities[key]);
+      this.entities[key] = new WitEntity(this.response.entities[key]);
     }
   }
 
@@ -60,16 +60,15 @@ class WitResponse {
   * Returns the most confident intent with its confident value or NO_INTENT or null if soemthing failed
   */
   intent() {
-    if (!response) return null;
-
-    let intent = this.response.intent[0];
+    if (!this.response) return null;
+    let intent = this.response.intents[0];
     
-    if (!!intent) {
+    if (!intent) {
       return this.NO_INTENT;
     }
 
     let isConfident = intent.confidence >= INTEND_CONFIDENCE_TRESHOLD
-    return [intent.value, isConfident];
+    return [intent.name, isConfident];
   }
   
   get(name) {

@@ -14,7 +14,7 @@ const
 const {Wit, log} = require('node-wit');
 
 const attachmentHandler = require('./handlers/attachment.js');
-const Actions = require('./facebook/actions.js');
+const Actions = require('./responses/actions.js');
 const Cache = require('./helpers/cache.js');
 const MessageHandler = require('./handlers/text.js');
 const SerieExecutor = require('./helpers/serieExecutor');
@@ -23,25 +23,27 @@ const PostBackHandler = require('./handlers/postBacks.js');
 const ProfileDatabase = require('./database/ProfileDatabase.js');
 const ContinualResponse = require('./handlers/continualResponses.js');
 const ResponseHandler = require('./handlers/response.js');
+const Response = require('./responses/responseObject.js');
 
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 const WIT_ACCES_TOKEN = process.env.WIT_ACCES_TOKEN;
 const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
 
-const actions = new Actions(PAGE_ACCESS_TOKEN);
+function send_type(sender_psid, msg) {
+  return new Promise((resolve, reject) => {
+    console.log(`Sending ${msg.type}, "${msg.value}" to ${sender_psid}`);
+    resolve();
+  });
+}
+
+const actions = new Actions(send_type, send_type, send_type);
 const cache = new Cache();
 const Profile = new ProfileDatabase();
 const client = new Wit({
   accessToken: WIT_ACCES_TOKEN,
-  logger: new log.Logger(log.DEBUG) // optional
+  logger: new log.Logger(log.DEBUG),
+  apiVersion: "20200513"
 });
-
-//Test
-const testMSg = "awiodjaoiwdjoawj";
-client.message(testMSg, {}).then(data => {
-
-})
-//Test end
 
 app.use(express.static('public'));
 app.use(cookieParser());
@@ -94,36 +96,36 @@ app.get('/webhook', (req, res) => {
   }
 });
 
+function formMessages(response, sender_psid) {
+  let responseHandler = new ResponseHandler(response, actions, sender_psid);
+  let todos = responseHandler.getTasks();
+  var serieExecutor = new SerieExecutor(todos, () => { serieExecutor = undefined });
+}
 
 function messageAccepted (response, sender_psid) {
   if (response.hasError()) {
     messageRejected(response, sender_psid);
     return;
   }
-  let responseHandler = new ResponseHandler(response, actions, sender_psid);
-  let todos = responseHandler.getTasks();
-  var serieExecutor = new SerieExecutor(todos, () => { serieExecutor = undefined });
+  formMessages(response, sender_psid);
 }
 
 function messageRejected (response, sender_psid) {
   console.error(response.error);
-  let customMsg = response.type === "text" && !!response.value;
-  actions.callSendAPI(sender_psid, customMsg ? response.value : "Ou, toto je nepríjemné. Niečo sa pokazilo. 😞");
+  formMessages(new Response("text", "Ou, toto je nepríjemné. Niečo sa pokazilo. 😞"), sender_psid);
 }
 
 // Handles messages events
 function handleMessage(sender_psid, received_message) {
-  let response;
   var text = received_message.text;
   // Check if the message contains text
-  if (text) {    
-    var profile = new Profile(sender_psid); // loads profile from database
+  if (text) {
     //odstrani diakritiku 
     let strippedText = text.normalize('NFD').replace(/[\u0300-\u036f]/g, "");
 
     client.message(strippedText.replace(".", ""), {})
     .then((data) => {
-      profile.fOnLoad().then(() => {
+      Profile.getUser(sender_psid).then(profile => {
         let continualConversationHandler = new ContinualResponse(profile, cache, text);
         let continualConversationPromise = continualConversationHandler.resolve(); // inject before text handler
         if (continualConversationPromise) {
@@ -134,8 +136,8 @@ function handleMessage(sender_psid, received_message) {
             messageRejected(response, sender_psid);
           });
           continualConversationPromise.finally(() => {
-            profile.end();
-          })
+            Profile.updateUser(sender_psid, profile);
+          });
         } else {
           
           let messageHandler = new MessageHandler(data, profile, cache, text);
@@ -146,7 +148,7 @@ function handleMessage(sender_psid, received_message) {
             messageRejected(response, sender_psid);
           })
           messagePromise.finally(() => {
-            profile.end();
+            Profile.updateUser(sender_psid, profile);
           });
         }
       }).catch(err => {

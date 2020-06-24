@@ -10,7 +10,7 @@ class MessageHandler {
     }
     this.cache = cache;
     this.response = new WitResponse(response);
-    this.sender_psid = profile.fSender_psid();
+    this.sender_psid = profile.sender_psid;
     this.profile = profile;
     this.originalText = originalText;
     this.continualResponse = new ContinualResponse(profile, cache, originalText);
@@ -28,13 +28,12 @@ class MessageHandler {
   
   resolve () {
     let intent = this.response.intent();
-
     if (!intent) {
       throw new Error("The Wit response was not initliazed properly. The intent was null");
     }
 
     if(intent === WitResponse.NO_INTENT) {
-      this.dontKnow();
+      return this.dontKnow();
     }
 
     let isConfident, value;
@@ -42,7 +41,7 @@ class MessageHandler {
     isConfident = intent[1];
 
     if (!isConfident) {
-      this.partiallyDontKnow(value);
+      return this.partiallyDontKnow(value);
     }
 
     return this[value]();
@@ -86,6 +85,16 @@ class MessageHandler {
 
   show_case$help(resolve) {
     resolve(new Response("text", "Snazis sa dostat do show_case? Sprav to takto ..."));
+  }
+
+  test_message() {
+    return new Promise((resolve, reject) => {
+        resolve(new Response("text", "Yes som tu").next("wait", 800).next("text", "dvojita srava"));
+    });
+  }
+
+  test_message$help(resolve) {
+    resolve(new Response("text", "Takto nerob message help"));
   }
 
   // Place intent handlers here

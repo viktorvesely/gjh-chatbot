@@ -51,6 +51,7 @@ class ProfileDatabase {
             };
     
             for (let key in properties) {
+                if (key[0] === '_') continue;
                 saveObj[key] = properties[key];
             }
     
@@ -66,6 +67,12 @@ class ProfileDatabase {
         return new Promise((resolve, reject) => {
             this.db.findOne({sender_psid: sender_psid}, (err, doc) => {
                 if (this.errorRoutine(err, reject)) return;
+                if (doc === null) {
+                    this.createRoutine(sender_psid, {}).then(() => {
+                        resolve({sender_psid: sender_psid});
+                    });
+                    return;
+                }
                 resolve(doc);
             });
         });
@@ -103,10 +110,17 @@ class ProfileDatabase {
 
     updateRoutine(sender_psid, properties) {
         return new Promise((resolve, reject) => {
+            let setData = {};
+
+            for(let key in properties) {
+                if (key[0] === '_') continue;
+                setData[key] = properties[key];
+            }
+
             let setObj = {
                 $set: {
                     data:{
-                        properties
+                        setData
                     }
                 }
             };
