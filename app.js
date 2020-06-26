@@ -9,7 +9,8 @@ const
   app = express().use(body_parser.json()), // creates express http server
   session = require('express-session'),
   cookieParser = require('cookie-parser'),
-  shajs = require('sha.js')
+  shajs = require('sha.js'), 
+  http = require('http').Server(app);
 
 const {Wit, log} = require('node-wit');
 
@@ -19,72 +20,81 @@ const Cache = require('./helpers/cache.js');
 const MessageHandler = require('./handlers/text.js');
 const SerieExecutor = require('./helpers/serieExecutor');
 const PostBackHandler = require('./handlers/postBacks.js');
-// const Profile = require('./database/profile.js');
 const ProfileDatabase = require('./database/ProfileDatabase.js');
+const PendingsDatabase = require('./database/msgsDatabase.js');
 const ContinualResponse = require('./handlers/continualResponses.js');
 const ResponseHandler = require('./handlers/response.js');
 const Response = require('./responses/responseObject.js');
+const Socket = require('./handlers/socket.js');
 
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 const WIT_ACCES_TOKEN = process.env.WIT_ACCES_TOKEN;
 const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
 
-function send_type(sender_psid, msg) {
+app.use(express.static('public'));
+app.use(express.static(__dirname + '/chat'))
+app.use(cookieParser());
+
+const server = app.listen(process.env.PORT || 1337, () => console.log('webhook is listening'));
+const socketio = require('socket.io').listen(server);
+const Pendings = new PendingsDatabase();
+const socket = new Socket(socketio, Pendings);
+const cache = new Cache();
+const Profile = new ProfileDatabase();
+
+function store_message(sender_psid, msg) {
   return new Promise((resolve, reject) => {
-    console.log(`Sending ${msg.type}, "${msg.value}" to ${sender_psid}`);
-    resolve();
+    Pendings.newMsg(sender_psid, msg).then(() => { 
+      resolve();
+    });
+    socket.new_message(sender_psid);
   });
 }
 
-const actions = new Actions(send_type, send_type, send_type);
-const cache = new Cache();
-const Profile = new ProfileDatabase();
+const actions = new Actions(store_message, store_message, store_message);
+
 const client = new Wit({
   accessToken: WIT_ACCES_TOKEN,
   logger: new log.Logger(log.DEBUG),
   apiVersion: "20200513"
 });
 
-app.use(express.static('public'));
-app.use(cookieParser());
-
-app.listen(process.env.PORT || 1337, () => console.log('webhook is listening'));
-
-app.get('/', (req, res) => {
-  res.sendFile(__dirname +  '/views/index.html');
+app.get('/chat', (req, res) => {
+  res.sendFile(__dirname +  '/chat/index.html');
 });
 
+
+app.post('/pendings', (req, res) => {
+    let sender_psid = req.body.sender_psid;
+    
+    if (!sender_psid) {
+      res.sendStatus(400);
+      return;
+    }
+
+    Pendings.pendings(sender_psid).then(msgs => {
+      let response =  {
+        update: null,
+        msgs: null
+      }
+      response.update = msgs.length !== 0;
+      response.msgs = msgs;
+      res.status(200).send(JSON.stringify(response));
+    });
+});
 
 app.post('/webhook', (req, res) => {  
-  let body = req.body;
-  if (body.object === 'page') {
-    body.entry.forEach((entry) => {
-      // Get the webhook event. entry.messaging is an array, but
-      // will only ever contain one event, so we get index 0
-      let webhook_event = entry.messaging[0];
-      let sender_psid = webhook_event.sender.id;
-      
-      if (webhook_event.message) {
-        handleMessage(sender_psid, webhook_event.message)
-        //actions.setStatus('mark_seen', sender_psid)
-      } else if (webhook_event.postback) {
-        handlePostback(sender_psid, webhook_event.postback)
-      }
-    });
-    res.status(200).send('EVENT_RECEIVED');
-
-  } else {
-    res.sendStatus(404);
-  }
-
+  if (processQuery(req.body)) res.status(200).send('EVENT_RECEIVED');
+  else res.sendStatus(400);
 });
 
+// Fro FB authentication
 app.get('/webhook', (req, res) => {
   
   let mode = req.query['hub.mode'];
   let token = req.query['hub.verify_token'];
   let challenge = req.query['hub.challenge'];
-    
+  
   if (mode && token) {
   
     if (mode === 'subscribe' && token === VERIFY_TOKEN) {
@@ -94,7 +104,26 @@ app.get('/webhook', (req, res) => {
       res.sendStatus(403);      
     }
   }
+  res.sendStatus(403);
 });
+
+function processQuery(body) {
+  if (body.object !== 'page') return false; 
+  
+  body.entry.forEach((entry) => {
+    // Get the webhook event. entry.messaging is an array, but
+    // will only ever contain one event, so we get index 0
+    let webhook_event = entry.messaging[0];
+    let sender_psid = webhook_event.sender.id;
+    
+    if (webhook_event.message) {
+      handleMessage(sender_psid, webhook_event.message)
+    } else if (webhook_event.postback) {
+      handlePostback(sender_psid, webhook_event.postback)
+    }
+  });
+  return true;
+}
 
 function formMessages(response, sender_psid) {
   let responseHandler = new ResponseHandler(response, actions, sender_psid);
@@ -136,7 +165,7 @@ function handleMessage(sender_psid, received_message) {
             messageRejected(response, sender_psid);
           });
           continualConversationPromise.finally(() => {
-            Profile.updateUser(sender_psid, profile);
+            Profile.updateUser(profile);
           });
         } else {
           
@@ -148,7 +177,7 @@ function handleMessage(sender_psid, received_message) {
             messageRejected(response, sender_psid);
           })
           messagePromise.finally(() => {
-            Profile.updateUser(sender_psid, profile);
+            Profile.updateUser(profile);
           });
         }
       }).catch(err => {

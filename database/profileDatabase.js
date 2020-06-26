@@ -1,6 +1,6 @@
-const Datastore = require('nedb')
+const Datastore = require('nedb');
 
-const pathProfileDatabase = "./data/profiles_test.db"
+const pathProfileDatabase = "./data/profiles.db";
 
 class ProfileDatabase {
     constructor() {
@@ -9,19 +9,6 @@ class ProfileDatabase {
             if (err) { 
                 console.error(err);
             }
-        });
-    }
-
-    load() {
-        return new Promise((resolve, reject) => {
-            this.db.loadDatabase( err => {    
-                if (err) { 
-                    console.error(err);
-                    reject();
-                    return;
-                }
-                resolve();
-            });
         });
     }
 
@@ -39,23 +26,24 @@ class ProfileDatabase {
             this.db.findOne({sender_psid: sender_psid}, (err, doc) => {
                 if (this.errorRoutine(err, reject)) return;
                 resolve(doc !== null);
-            })
+            });
         });
     }
 
+    processProperties(user) {
+        let filtered = {};
+        for (let key in user) {
+            if (key[0] === '_') continue;
+            filtered[key] = user[key];
+        }
+        return filtered;
+    }
 
-    createRoutine(sender_psid, properties) {
+
+    createRoutine(user) {
         return new Promise((resolve, reject) => {
-            let saveObj = {
-                sender_psid: sender_psid
-            };
-    
-            for (let key in properties) {
-                if (key[0] === '_') continue;
-                saveObj[key] = properties[key];
-            }
-    
-            
+            let saveObj = this.processProperties(user);
+
             this.db.insert(saveObj, (err, newDoc) => {
                 if (this.errorRoutine(err, reject)) return;
                 resolve();
@@ -68,7 +56,7 @@ class ProfileDatabase {
             this.db.findOne({sender_psid: sender_psid}, (err, doc) => {
                 if (this.errorRoutine(err, reject)) return;
                 if (doc === null) {
-                    this.createRoutine(sender_psid, {}).then(() => {
+                    this.createRoutine({sender_psid: sender_psid}).then(() => {
                         resolve({sender_psid: sender_psid});
                     });
                     return;
@@ -78,99 +66,36 @@ class ProfileDatabase {
         });
     }
 
-    serializeUser(sender_psid, blueprint) {
+    updateRoutine(user) {
         return new Promise((resolve, reject) => {
-            this.getUser(sender_psid).then(user => {
-                
-                if (user == null) { 
-                    resolve();
-                    return;
-                }
-
-                let unset = {};
-
-                for (let key in user) {
-                    if (key == "sender_psid") continue;
-                    
-                    if (!blueprint.hasOwnProperty(key)) {
-                        unset[key] = true;
-                    }
-                }
-
-                this.db.update({sender_psid: sender_psid}, {$unset: unset}, {}, (err, nAffected) => {
-                    if (this.errorRoutine(err, reject)) return;
-                    resolve();
-                });
-
-            }, () => {
-                reject();
-            });
-        });
-    } 
-
-    updateRoutine(sender_psid, properties) {
-        return new Promise((resolve, reject) => {
-            let setData = {};
-
-            for(let key in properties) {
-                if (key[0] === '_') continue;
-                setData[key] = properties[key];
-            }
-
             let setObj = {
-                $set: {
-                    data:{
-                        setData
-                    }
-                }
+                $set: this.processProperties(user)
             };
-    
-            this.db.update({sender_psid: sender_psid}, setObj, {}, (err, nAffected) => {
+            
+            this.db.update({sender_psid: user.sender_psid}, setObj, {}, (err, nAffected) => {
+                if (nAffected > 1) throw new Error(`Multiple users with same sender_psid detected! sender_psid: ${sender_psid}`);
                 if (this.errorRoutine(err, reject)) return;
                 resolve();
             });
         });
     }
 
-    breakDown(_sender_psid, _properties) {
-        let sender_psid, properties;
-
-        if (_properties == null) {
-            sender_psid = _sender_psid.sender_psid
-            if (!sender_psid) {
-                throw new Error("sender_psid was undefined!");
-            }
-            _sender_psid.sender_psid = undefined;
-            properties = _sender_psid;
-        } else {
-            sender_psid = _sender_psid;
-            properties = _properties;
-        }
-       
-        return [sender_psid, properties];
-    }
-
     /**
-    * @param {string|object} sender_psid Either id of the user or the entire user object
-    * @param {object|null} properties Object of the user properties, default is null
+    * @param {object} user user object (must have sender_psid)!
     */
-    updateUser(sender_psid, properties=null) {
+    updateUser(user) {
         return new Promise((resolve, reject) => {
-            let _sender_psid, _properties, both;
+            let sender_psid = user.sender_psid;
 
-            both = this.breakDown(sender_psid, properties);
-            _sender_psid = both[0];
-            _properties = both[1];
-
-            this.userExist(_sender_psid).then(exists => {
+            this.userExist(sender_psid).then(exists => {
                 if (exists) {
-                    this.updateRoutine(_sender_psid, _properties).then(() => {
+                    this.updateRoutine(user).then(() => {
                         resolve();
                     }, () => {
                         reject();
                     })
                 } else {
-                    this.createRoutine(_sender_psid, _properties).then(() => {
+                    this.createRoutine(user).then(() => {
                         resolve();
                     }, () => {
                         reject();

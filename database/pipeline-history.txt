@@ -1,7 +1,0 @@
-create table pipelines (ID INTEGER PRIMARY KEY AUTOINCREMENT,userId STRING,flags STRING);
-
-// init
-
-ALTER TABLE pipelines ADD COLUMN prefix STRING;
-
-// added prefix for message recognizing

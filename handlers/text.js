@@ -58,7 +58,7 @@ class MessageHandler {
       if(typeof helperFunction === "undefined") {
         return resolve(new Response("text", "vobec neviem")); // helper function not implemented -> BAD BEHAVIOUR!
       }
-      return helperFunction();
+      return helperFunction(resolve);
     })
   }
   
@@ -95,6 +95,16 @@ class MessageHandler {
 
   test_message$help(resolve) {
     resolve(new Response("text", "Takto nerob message help"));
+  }
+
+  knock_knock() {
+    return new Promise((resolve, reject) => {
+      resolve(new Response("text", "Neotravuj ma!").next("wait", 800).next("text", "No dobre. Who is there?"));
+    });
+  }
+
+  knock_knock$help(resolve) {
+    resolve(new Response("text", "Povedz ftip!"));
   }
 
   // Place intent handlers here
