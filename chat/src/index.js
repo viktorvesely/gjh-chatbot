@@ -25,6 +25,26 @@ socket.on("new_message", () => {
 
         msgs.forEach(msg => {
             if (currentMsgIndex !== null) {
+                if (msg.type === "button") {
+                    let options = msg.options[0];
+                    chat.message.update(currentMsgIndex, {
+                        loading: false,
+                        content: msg.value
+                    });
+                    chat.action.button({
+                        action: [
+                            {
+                                text: options.title,
+                                value: options.url 
+                            }
+                        ]
+                    }).then(res => {
+                        window.open(res.value);
+                    });
+                    return;
+                }
+
+
                 chat.message.update(currentMsgIndex, {
                     loading: false,
                     content: msg.value

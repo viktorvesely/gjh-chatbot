@@ -1,20 +1,52 @@
-{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"text\",\"value\":\"Neotravuj ma!\",\"options\":[]}"],"_id":"t5bYiG7xf6U9pxUi"}
-{"$$deleted":true,"_id":"t5bYiG7xf6U9pxUi"}
-{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"text\",\"value\":\"No dobre. Who is there?\",\"options\":[]}"],"_id":"97EQFiDxKTHJ0K7j"}
-{"$$deleted":true,"_id":"97EQFiDxKTHJ0K7j"}
-{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"text\",\"value\":\"Neotravuj ma!\",\"options\":[]}"],"_id":"nfXdXT4AdEogeM7A"}
-{"$$deleted":true,"_id":"nfXdXT4AdEogeM7A"}
-{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"text\",\"value\":\"No dobre. Who is there?\",\"options\":[]}"],"_id":"YzZ94jLpajipZezM"}
-{"$$deleted":true,"_id":"YzZ94jLpajipZezM"}
-{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"text\",\"value\":\"Neotravuj ma!\",\"options\":[]}"],"_id":"dEHsbvNQJutDqMwO"}
-{"$$deleted":true,"_id":"dEHsbvNQJutDqMwO"}
-{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"text\",\"value\":\"No dobre. Who is there?\",\"options\":[]}"],"_id":"rQqejKA1QWc4GQXx"}
-{"$$deleted":true,"_id":"rQqejKA1QWc4GQXx"}
-{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"text\",\"value\":\"vobec neviem\",\"options\":[]}"],"_id":"p6y5ahxVpTNu0UJo"}
-{"$$deleted":true,"_id":"p6y5ahxVpTNu0UJo"}
-{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"text\",\"value\":\"vobec neviem\",\"options\":[]}"],"_id":"3Lg75J8REGZ9B6ux"}
-{"$$deleted":true,"_id":"3Lg75J8REGZ9B6ux"}
-{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"text\",\"value\":\"vobec neviem\",\"options\":[]}"],"_id":"HBps3Ojgccacm9B7"}
-{"$$deleted":true,"_id":"HBps3Ojgccacm9B7"}
-{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"text\",\"value\":\"vobec neviem\",\"options\":[]}"],"_id":"I0FqSdeIfOl0KNS7"}
-{"$$deleted":true,"_id":"I0FqSdeIfOl0KNS7"}
+{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"text\",\"value\":\"Bohuzial osobne neviem ale\",\"options\":[]}"],"_id":"HeLQp0wfwbItImob"}
+{"$$deleted":true,"_id":"HeLQp0wfwbItImob"}
+{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"buttons\",\"value\":\"Ale tu si to mozes zistit\",\"options\":{\"btns\":[{\"title\":\"Klikni na mna\",\"type\":\"web_url\",\"url\":\"https://www.podnikajte.sk/pracovne-pravo-bozp/narok-na-dovolenku-kedy-vznika\",\"webview_height_ratio\":\"tall\"}]}}"],"_id":"E9wR4rBn2xMimIZh"}
+{"$$deleted":true,"_id":"E9wR4rBn2xMimIZh"}
+{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"text\",\"value\":\"Bohuzial osobne neviem ale\",\"options\":[]}"],"_id":"IbbiAVeW3hNKubNt"}
+{"$$deleted":true,"_id":"IbbiAVeW3hNKubNt"}
+{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"buttons\",\"value\":\"Ale tu si to mozes zistit\",\"options\":{\"btns\":[{\"title\":\"Klikni na mna\",\"type\":\"web_url\",\"url\":\"https://www.podnikajte.sk/pracovne-pravo-bozp/narok-na-dovolenku-kedy-vznika\",\"webview_height_ratio\":\"tall\"}]}}"],"_id":"gc013VqXbPZkVvDU"}
+{"$$deleted":true,"_id":"gc013VqXbPZkVvDU"}
+{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"text\",\"value\":\"Bohuzial osobne neviem ale\",\"options\":[]}"],"_id":"A9nG2lahpQKzhDZU"}
+{"$$deleted":true,"_id":"A9nG2lahpQKzhDZU"}
+{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"buttons\",\"value\":\"Ale tu si to mozes zistit\",\"options\":{\"btns\":[{\"title\":\"Klikni na mna\",\"type\":\"web_url\",\"url\":\"https://www.podnikajte.sk/pracovne-pravo-bozp/narok-na-dovolenku-kedy-vznika\",\"webview_height_ratio\":\"tall\"}]}}"],"_id":"6wsc0AwX1xtdF1XK"}
+{"$$deleted":true,"_id":"6wsc0AwX1xtdF1XK"}
+{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"text\",\"value\":\"Bohuzial osobne neviem ale\",\"options\":[]}"],"_id":"0LwqdW8mCU1iO1ee"}
+{"$$deleted":true,"_id":"0LwqdW8mCU1iO1ee"}
+{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"buttons\",\"value\":\"Ale tu si to mozes zistit\",\"options\":{\"btns\":[{\"title\":\"Klikni na mna\",\"type\":\"web_url\",\"url\":\"https://www.podnikajte.sk/pracovne-pravo-bozp/narok-na-dovolenku-kedy-vznika\",\"webview_height_ratio\":\"tall\"}]}}"],"_id":"saf5QQx6Smeq2tMD"}
+{"$$deleted":true,"_id":"saf5QQx6Smeq2tMD"}
+{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"text\",\"value\":\"Bohuzial osobne neviem ale\",\"options\":[]}"],"_id":"C8BZxEgVO5ml7ghW"}
+{"$$deleted":true,"_id":"C8BZxEgVO5ml7ghW"}
+{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"buttons\",\"value\":\"Ale tu si to mozes zistit\",\"options\":{\"btns\":[{\"title\":\"Klikni na mna\",\"type\":\"web_url\",\"url\":\"https://www.podnikajte.sk/pracovne-pravo-bozp/narok-na-dovolenku-kedy-vznika\",\"webview_height_ratio\":\"tall\"}]}}"],"_id":"FVKR92HrLfc58TEw"}
+{"$$deleted":true,"_id":"FVKR92HrLfc58TEw"}
+{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"text\",\"value\":\"Bohuzial osobne neviem ale\",\"options\":[]}"],"_id":"nl9udR4bbZ9Ruz8p"}
+{"$$deleted":true,"_id":"nl9udR4bbZ9Ruz8p"}
+{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"buttons\",\"value\":\"Ale tu si to mozes zistit\",\"options\":{\"btns\":[{\"title\":\"Klikni na mna\",\"type\":\"web_url\",\"url\":\"https://www.podnikajte.sk/pracovne-pravo-bozp/narok-na-dovolenku-kedy-vznika\",\"webview_height_ratio\":\"tall\"}]}}"],"_id":"YeEZnUEfFm4EcO47"}
+{"$$deleted":true,"_id":"YeEZnUEfFm4EcO47"}
+{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"text\",\"value\":\"Bohuzial osobne neviem ale\",\"options\":[]}"],"_id":"8JCPA1R1pHOdQsNI"}
+{"$$deleted":true,"_id":"8JCPA1R1pHOdQsNI"}
+{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"buttons\",\"value\":\"Ale tu si to mozes zistit\",\"options\":{\"btns\":[{\"title\":\"Klikni na mna\",\"type\":\"web_url\",\"url\":\"https://www.podnikajte.sk/pracovne-pravo-bozp/narok-na-dovolenku-kedy-vznika\",\"webview_height_ratio\":\"tall\"}]}}"],"_id":"QUz2Rpub0lPyPbkz"}
+{"$$deleted":true,"_id":"QUz2Rpub0lPyPbkz"}
+{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"text\",\"value\":\"Bohuzial osobne neviem ale\",\"options\":[]}"],"_id":"oI33ogYETyPfJK6n"}
+{"$$deleted":true,"_id":"oI33ogYETyPfJK6n"}
+{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"buttons\",\"value\":\"Ale tu si to mozes zistit\",\"options\":{\"btns\":[{\"title\":\"Klikni na mna\",\"type\":\"web_url\",\"url\":\"https://www.podnikajte.sk/pracovne-pravo-bozp/narok-na-dovolenku-kedy-vznika\",\"webview_height_ratio\":\"tall\"}]}}"],"_id":"4tEtf19FkEiQpKcM"}
+{"$$deleted":true,"_id":"4tEtf19FkEiQpKcM"}
+{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"text\",\"value\":\"Bohuzial osobne neviem ale\",\"options\":[]}"],"_id":"PlqSrV6amPM7ZTBb"}
+{"$$deleted":true,"_id":"PlqSrV6amPM7ZTBb"}
+{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"buttons\",\"value\":\"Ale tu si to mozes zistit\",\"options\":{\"btns\":[{\"title\":\"Klikni na mna\",\"type\":\"web_url\",\"url\":\"https://www.podnikajte.sk/pracovne-pravo-bozp/narok-na-dovolenku-kedy-vznika\",\"webview_height_ratio\":\"tall\"}]}}"],"_id":"XH79uh0lqbbAknMs"}
+{"$$deleted":true,"_id":"XH79uh0lqbbAknMs"}
+{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"text\",\"value\":\"Bohuzial osobne neviem ale\",\"options\":[]}"],"_id":"r68EnPGk499qEGJh"}
+{"$$deleted":true,"_id":"r68EnPGk499qEGJh"}
+{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"buttons\",\"value\":\"Ale tu si to mozes zistit\",\"options\":{\"btns\":[{\"title\":\"Klikni na mna\",\"type\":\"web_url\",\"url\":\"https://www.podnikajte.sk/pracovne-pravo-bozp/narok-na-dovolenku-kedy-vznika\",\"webview_height_ratio\":\"tall\"}]}}"],"_id":"8Cp0gLlP95E0oli9"}
+{"$$deleted":true,"_id":"8Cp0gLlP95E0oli9"}
+{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"text\",\"value\":\"Bohuzial osobne neviem ale\",\"options\":[]}"],"_id":"MRr9B44pzhdhSbsH"}
+{"$$deleted":true,"_id":"MRr9B44pzhdhSbsH"}
+{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"buttons\",\"value\":\"Ale tu si to mozes zistit\",\"options\":{\"btns\":[{\"title\":\"Klikni na mna\",\"type\":\"web_url\",\"url\":\"https://www.podnikajte.sk/pracovne-pravo-bozp/narok-na-dovolenku-kedy-vznika\",\"webview_height_ratio\":\"tall\"}]}}"],"_id":"RPoYtQcEMyLU6eec"}
+{"$$deleted":true,"_id":"RPoYtQcEMyLU6eec"}
+{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"text\",\"value\":\"Bohuzial osobne neviem ale\",\"options\":[]}"],"_id":"ojYFpKJZ9rFY6R7q"}
+{"$$deleted":true,"_id":"ojYFpKJZ9rFY6R7q"}
+{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"buttons\",\"value\":\"Ale tu si to mozes zistit\",\"options\":{\"btns\":[{\"title\":\"Klikni na mna\",\"type\":\"web_url\",\"url\":\"https://www.podnikajte.sk/pracovne-pravo-bozp/narok-na-dovolenku-kedy-vznika\",\"webview_height_ratio\":\"tall\"}]}}"],"_id":"YggRvanDEjTv2Jut"}
+{"$$deleted":true,"_id":"YggRvanDEjTv2Jut"}
+{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"text\",\"value\":\"Bohuzial osobne neviem ale\",\"options\":[]}"],"_id":"nTYw3RkHOTpm3jbU"}
+{"$$deleted":true,"_id":"nTYw3RkHOTpm3jbU"}
+{"sender_psid":"testing_sender_psid_123","pendings":["{\"type\":\"buttons\",\"value\":\"Ale tu si to mozes zistit\",\"options\":{\"btns\":[{\"title\":\"Klikni na mna\",\"type\":\"web_url\",\"url\":\"https://www.podnikajte.sk/pracovne-pravo-bozp/narok-na-dovolenku-kedy-vznika\",\"webview_height_ratio\":\"tall\"}]}}"],"_id":"tiCEb5AIyD3UPos8"}
+{"$$deleted":true,"_id":"tiCEb5AIyD3UPos8"}

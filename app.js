@@ -26,6 +26,7 @@ const ContinualResponse = require('./handlers/continualResponses.js');
 const ResponseHandler = require('./handlers/response.js');
 const Response = require('./responses/responseObject.js');
 const Socket = require('./handlers/socket.js');
+const WitAPi = require('./wit/api.js');
 
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 const WIT_ACCES_TOKEN = process.env.WIT_ACCES_TOKEN;
@@ -60,13 +61,25 @@ const client = new Wit({
 });
 
 app.get('/chat', (req, res) => {
-  res.sendFile(__dirname +  '/chat/index.html');
+  res.sendFile(__dirname +  '/chat/dist/index.html');
 });
 
+app.post('/api', (req, res) => {
+  let body = req.body;
+  
+  switch (body.request) {
+    case "intents":
+      WitAPi.getIntents(WIT_ACCES_TOKEN).then(intents => {
+        res.send(intents);
+      });
+      break;
+  }
+
+});
 
 app.post('/pendings', (req, res) => {
     let sender_psid = req.body.sender_psid;
-    
+
     if (!sender_psid) {
       res.sendStatus(400);
       return;

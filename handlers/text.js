@@ -2,6 +2,7 @@ const Utils = require('../helpers/utils.js');
 const Response = require('../responses/responseObject.js');
 const ContinualResponse = require('./continualResponses.js');
 const WitResponse = require('../wit/witResponse.js');
+const Button = require("../templates/button.js");
 
 class MessageHandler {
   constructor (response, profile, cache, originalText) {
@@ -105,6 +106,14 @@ class MessageHandler {
 
   knock_knock$help(resolve) {
     resolve(new Response("text", "Povedz ftip!"));
+  }
+
+  remaining_holiday() {
+    return new Promise((resolve, reject) => {
+      resolve(new Response("text", "Bohuzial osobne neviem ale")
+      .next("wait", 800)
+      .next("buttons", "Ale tu si to mozes zistit", new Button("url", "Klikni na mna", "https://www.podnikajte.sk/pracovne-pravo-bozp/narok-na-dovolenku-kedy-vznika")))
+    });
   }
 
   // Place intent handlers here
