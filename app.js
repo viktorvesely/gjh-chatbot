@@ -22,6 +22,7 @@ const SerieExecutor = require('./helpers/serieExecutor');
 const PostBackHandler = require('./handlers/postBacks.js');
 const ProfileDatabase = require('./database/ProfileDatabase.js');
 const PendingsDatabase = require('./database/msgsDatabase.js');
+const ResponsesDatabase = require('./database/responseDatabase.js');
 const ContinualResponse = require('./handlers/continualResponses.js');
 const ResponseHandler = require('./handlers/response.js');
 const Response = require('./responses/responseObject.js');
@@ -34,7 +35,14 @@ const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
 
 app.use(express.static('public'));
 app.use(express.static(__dirname + '/chat'))
+app.use(express.static(__dirname + '/builder'))
 app.use(cookieParser());
+
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*"); // update to match the domain you will make the request from
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
 
 const server = app.listen(process.env.PORT || 1337, () => console.log('webhook is listening'));
 const socketio = require('socket.io').listen(server);
@@ -42,6 +50,7 @@ const Pendings = new PendingsDatabase();
 const socket = new Socket(socketio, Pendings);
 const cache = new Cache();
 const Profile = new ProfileDatabase();
+const Responses = new ResponsesDatabase();
 
 function store_message(sender_psid, msg) {
   return new Promise((resolve, reject) => {
@@ -75,6 +84,32 @@ app.post('/api', (req, res) => {
       break;
   }
 
+});
+
+app.post('/responses', (req, res) => {
+  let body = req.body;
+
+  switch(body.request) {
+    case "save":
+      Responses.save(body.payload).then(() => {
+        res.sendStatus(200);
+      }).catch(err => {
+        console.error(err);
+        res.sendStatus(500);
+      });
+      break;
+    case "load": 
+      Responses.get(body.name).then(doc => {
+        let response = null;
+        if (doc !== null) {
+          response = doc.response;
+        } else {
+          response = JSON.stringify([]);
+        }
+        res.status(200).send(response);
+      });
+      break;
+  }
 });
 
 app.post('/pendings', (req, res) => {
