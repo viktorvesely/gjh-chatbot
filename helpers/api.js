@@ -19,6 +19,26 @@ class API {
             });
         });
     }
+
+    message(text) {
+        return new Promise((resolve, reject) => {
+            fetch(this.url + "/predict", {
+                method: "POST",
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({utterance: text}) 
+            })
+            .then(res => res.json())
+            .then(data =>  {
+                resolve(data);
+            }, err => {
+                console.error(err);
+                reject();
+            });
+        });
+    }
 }
 
 module.exports = API;

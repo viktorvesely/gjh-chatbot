@@ -25,7 +25,6 @@ const PendingsDatabase = require('./database/msgsDatabase.js');
 const ResponsesDatabase = require('./database/responseDatabase.js');
 const ContinualResponse = require('./handlers/continualResponses.js');
 const ResponseHandler = require('./handlers/response.js');
-const Response = require('./responses/responseObject.js');
 const Socket = require('./handlers/socket.js');
 const API = require('./helpers/api.js');
 
@@ -204,7 +203,7 @@ function messageAccepted (response, sender_psid) {
 
 function messageRejected (response, sender_psid) {
   console.error(response.error);
-  formMessages(new Response("text", "Ou, toto je nepríjemné. Niečo sa pokazilo. 😞"), sender_psid);
+  formMessages(response, sender_psid);
 }
 
 // Handles messages events
@@ -214,8 +213,9 @@ function handleMessage(sender_psid, received_message) {
   if (text) {
     //odstrani diakritiku 
     let strippedText = text.normalize('NFD').replace(/[\u0300-\u036f]/g, "");
+    strippedText = strippedText.replace(/[?.!]/, "");
 
-    client.message(strippedText.replace(".", ""), {})
+    Api.message(strippedText)
     .then((data) => {
       Profile.getUser(sender_psid).then(profile => {
         let continualConversationHandler = new ContinualResponse(profile, cache, text);
@@ -232,7 +232,7 @@ function handleMessage(sender_psid, received_message) {
           });
         } else {
           
-          let messageHandler = new MessageHandler(data, profile, cache, text);
+          let messageHandler = new MessageHandler(data, profile, cache, text, Responses);
           let messagePromise = messageHandler.resolve();
           messagePromise.then(response => {
             messageAccepted(response, sender_psid);

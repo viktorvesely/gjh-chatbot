@@ -1,4 +1,7 @@
 {"name":"pice_povedz:option_0","isIntent":false,"response":"[{\"value\":\"Klikni na mňa aby si ma upravil(a)\",\"type\":\"text\"}]","_id":"QW8ZpAYsy1Hyg2fs"}
 {"name":"pice_povedz","isIntent":true,"response":"[]","_id":"RTbgMfU6PxHZzuxg"}
+{"name":"sba","isIntent":true,"response":"[{\"value\":\"Plz to neches\",\"type\":\"text\"},{\"value\":\"2000\",\"type\":\"wait\"},{\"value\":\"Ver mi\",\"type\":\"text\"}]","_id":"XC1xw49suBZAYRX6"}
 {"name":"holiday_get:option_0","isIntent":false,"response":"[{\"value\":\"Klikni na mňa aby si ma upravil(a)\",\"type\":\"text\"}]","_id":"Z889GAalqUcJGxMN"}
 {"name":"holiday_get","isIntent":true,"response":"[]","_id":"g0dmOyMBYpBnQLBg"}
+{"name":"kava_zdarma","isIntent":true,"response":"[{\"value\":\"Ziadnu kavu nedostanes\",\"type\":\"text\"}]","_id":"wAJSjwlGmrwnhYlo"}
+{"name":"sba","isIntent":true,"response":"[{\"value\":\"Plz to neches\",\"type\":\"text\"},{\"value\":\"2000\",\"type\":\"wait\"},{\"value\":\"Ver mi\",\"type\":\"text\"},{\"value\":500,\"type\":\"wait\"},{\"value\":\"Kek\",\"type\":\"text\"}]","_id":"XC1xw49suBZAYRX6"}
