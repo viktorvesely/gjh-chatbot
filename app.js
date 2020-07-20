@@ -27,11 +27,12 @@ const ContinualResponse = require('./handlers/continualResponses.js');
 const ResponseHandler = require('./handlers/response.js');
 const Response = require('./responses/responseObject.js');
 const Socket = require('./handlers/socket.js');
-const WitAPi = require('./wit/api.js');
+const API = require('./helpers/api.js');
 
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 const WIT_ACCES_TOKEN = process.env.WIT_ACCES_TOKEN;
 const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
+const BIG_BRAIN = "http://127.0.0.1:5000"
 
 app.use(express.static('public'));
 app.use(express.static(__dirname + '/chat'))
@@ -51,6 +52,7 @@ const socket = new Socket(socketio, Pendings);
 const cache = new Cache();
 const Profile = new ProfileDatabase();
 const Responses = new ResponsesDatabase();
+const Api = new API(BIG_BRAIN);
 
 function store_message(sender_psid, msg) {
   return new Promise((resolve, reject) => {
@@ -70,7 +72,11 @@ const client = new Wit({
 });
 
 app.get('/chat', (req, res) => {
-  res.sendFile(__dirname +  '/chat/dist/index.html');
+  res.sendFile(__dirname + '/chat/dist/index.html');
+});
+
+app.get('/builder', (req, res) => {
+  res.sendFile(__dirname + '/builder/index.html');
 });
 
 app.post('/api', (req, res) => {
@@ -78,7 +84,7 @@ app.post('/api', (req, res) => {
   
   switch (body.request) {
     case "intents":
-      WitAPi.getIntents(WIT_ACCES_TOKEN).then(intents => {
+      Api.getIntents().then(intents => {
         res.send(intents);
       });
       break;
@@ -107,6 +113,15 @@ app.post('/responses', (req, res) => {
           response = JSON.stringify([]);
         }
         res.status(200).send(response);
+      });
+      break;
+    case "remove":
+      Responses.remove(body.names).then(nAffected => {
+        if (nAffected === 0) {
+          console.error("Error 0 docs were affected whilst removing intents or postbacks. Names:");
+          console.error(body.names);
+        }
+        res.sendStatus(200);
       });
       break;
   }

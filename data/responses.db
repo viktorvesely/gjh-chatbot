@@ -1,1 +1,4 @@
-{"name":"request_holiday","isIntent":true,"response":"[{\"value\":\"Klikni na mňa aby si ma upravil(a)\",\"type\":\"text\"}]","_id":"1GQA3x3jux7nenpq"}
+{"name":"pice_povedz:option_0","isIntent":false,"response":"[{\"value\":\"Klikni na mňa aby si ma upravil(a)\",\"type\":\"text\"}]","_id":"QW8ZpAYsy1Hyg2fs"}
+{"name":"pice_povedz","isIntent":true,"response":"[]","_id":"RTbgMfU6PxHZzuxg"}
+{"name":"holiday_get:option_0","isIntent":false,"response":"[{\"value\":\"Klikni na mňa aby si ma upravil(a)\",\"type\":\"text\"}]","_id":"Z889GAalqUcJGxMN"}
+{"name":"holiday_get","isIntent":true,"response":"[]","_id":"g0dmOyMBYpBnQLBg"}

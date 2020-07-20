@@ -81,10 +81,20 @@ class Responses {
         });
     }
 
+    removeOne(name) {
+        return this.remove([name]);
+    }
 
-    removePostBack(name) {
+    remove(names) {
         return new Promise((resolve, reject) => {
-            
+            query = [];
+            names.forEach(name => {
+                query.push({name: name});
+            });
+            this.db.remove({ $or: query }, (err, nAffected) => {
+                if (this.errorRoutine(err, reject)) return;
+                resolve(nAffected);
+            });
         });
     }    
 
