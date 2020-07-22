@@ -87,7 +87,7 @@ class Responses {
 
     remove(names) {
         return new Promise((resolve, reject) => {
-            query = [];
+            let query = [];
             names.forEach(name => {
                 query.push({name: name});
             });

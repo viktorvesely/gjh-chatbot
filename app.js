@@ -263,19 +263,17 @@ function handleMessage(sender_psid, received_message) {
 
 function handlePostback(sender_psid, received_postback) {
   let payload = received_postback.payload;
-  var profile = new Profile(sender_psid);
-  
-  profile.fOnLoad().then(() => {
-    let postBackHandler = new PostBackHandler(profile, payload, cache);
+
+  Profile.getUser(sender_psid).then(profile => {
+    let postBackHandler = new PostBackHandler(profile, sender_psid, payload, cache, Responses);
     let postBackPromise = postBackHandler.resolve();
     postBackPromise.then(response => {
-        messageAccepted(response, sender_psid)
+        messageAccepted(response, sender_psid);
       }, response => {
         messageRejected(response, sender_psid);
       });
     postBackPromise.finally(() => {
-      profile.end();
+      Profile.updateUser(profile);
     })
   });
-  return;
 }

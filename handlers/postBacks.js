@@ -1,41 +1,40 @@
 const Response = require('../responses/responseObject.js');
-const WitEntities = require('../wit/entities.js');
-const TextHandler = require('./text.js');
 const ContinualResponse = require('./continualResponses.js');
 
 module.exports = class PostBackHandler {
-  constructor(profile, postBack, cache) {
-    this.sender_psid = profile.fSender_psid();
+  constructor(profile, sender_psid,  postBack, cache, database) {
+    this.sender_psid = sender_psid;
+    this.responses = database;
     this.continualResponse = new ContinualResponse(profile, cache, undefined);
     this.profile = profile;
     this.postBack = postBack;
-    let builder = postBack.split(":");
-    this.handler = builder.shift();
-    this.args = builder;
-
     this.cache = cache;
   }
   
   resolve() {
-    let handleFunction = this[this.handler];
-    if (handleFunction !== undefined) {
-      return handleFunction.apply(this, this.args);
-    }
-    else {
-      return this.ret("Uhmm, niečo sa pokazilo. My bad.", "invalid postback name: " + this.handler);
-    }
-  }
-  
-  ret(responseText, error="") {
-    var response = new Response("text", responseText);
     return new Promise((resolve, reject) => {
-      if (error) {
-        response.error = error;
-        reject(response);
-      }
-      else resolve(response);
-    })
+      this.responses.get(this.postBack).then(data => {
+        let out = new Response().fromDatabase(data);
+        if (!out.hasResponse) {
+          resolve(new Response("text", "Táto funkcionalita neboľa ešte implementovaná")
+          .next("wait", 1500)
+          .next("text", "Povedz HR o tomto incidente")
+          );
+          return;
+        }
+        resolve(out);
+      }, () => { 
+        reject(new Response(
+          "text",
+          "Ou, toto je nepríjemné. Niečo sa pokazilo. 😞",
+        )
+          .next(
+            "text",
+            "Prosím kontaktuj môjho developera (HR odelenie)"
+          ).setError("There was an error whilst loading the response from database, there should be more logs above")
+        );
+      });
+    });
   }
-  
  
 }
