@@ -34,12 +34,7 @@ class ResponseHandler {
           });
           break; 
         case "wait":
-          todos.push(() => { return new Promise(resolve => {
-              setTimeout(() => {
-                resolve();
-              }, msg.value);             
-            })
-          })
+          todos.push(() => { return this.actions.sendWait(this.sender_psid, msg); });
           break;
       }
     }

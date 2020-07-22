@@ -62,7 +62,7 @@ function store_message(sender_psid, msg) {
   });
 }
 
-const actions = new Actions(store_message, store_message, store_message);
+const actions = new Actions(store_message);
 
 const client = new Wit({
   accessToken: WIT_ACCES_TOKEN,
@@ -71,7 +71,7 @@ const client = new Wit({
 });
 
 app.get('/chat', (req, res) => {
-  res.sendFile(__dirname + '/chat/dist/index.html');
+  res.sendFile(__dirname + '/chat/index.html');
 });
 
 app.get('/builder', (req, res) => {
@@ -136,11 +136,9 @@ app.post('/pendings', (req, res) => {
 
     Pendings.pendings(sender_psid).then(msgs => {
       let response =  {
-        update: null,
         msgs: null
       }
-      response.update = msgs.length !== 0;
-      response.msgs = msgs;
+      response.msgs = msgs; 
       res.status(200).send(JSON.stringify(response));
     });
 });

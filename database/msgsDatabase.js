@@ -1,6 +1,7 @@
 const Datastore = require('nedb');
 
 const pathProfileDatabase = "./data/msgs.db";
+const MAX_STORE_MSGS = 20;
 
 class Pendings {
     constructor() {
@@ -61,7 +62,8 @@ class Pendings {
         });
     }
 
-    pendings(sender_psid, clearAfter=true) {
+
+    pendings(sender_psid) {
         return new Promise((resolve, reject) => {
             this.db.findOne({sender_psid: sender_psid}, (err, doc) => {
                 if (this.errorRoutine(err, reject)) return;
@@ -70,8 +72,10 @@ class Pendings {
                     resolve([]);
                     return;
                 }
-                let pendings = this.unpackmsgs(doc.pendings);
-                if (clearAfter) this.clearPendings(sender_psid);
+                let pendings = this.unpackmsgs(doc.pendings); 
+                
+                this.clearPendings(sender_psid);
+
                 resolve(pendings);
             });
         });
@@ -83,7 +87,7 @@ class Pendings {
             
             let toInsert = {
                 sender_psid: sender_psid,
-                pendings: [this.processProperties(msg)]
+                pendings: [this.processProperties(msg)],
             }
             this.db.insert(toInsert, (err, newDoc) => {
                 if (this.errorRoutine(err, reject)) return;
